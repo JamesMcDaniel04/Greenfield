@@ -7,6 +7,8 @@ import SavedPage from "@/pages/SavedPage";
 import AuthPage from "@/pages/AuthPage";
 import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import AdminListPage from "@/pages/admin/AdminListPage";
+import AdminEditPage from "@/pages/admin/AdminEditPage";
 
 export default function App() {
   return (
@@ -17,6 +19,9 @@ export default function App() {
         <Route path="/saved" element={<SavedPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/admin" element={<AdminListPage />} />
+        <Route path="/admin/new" element={<AdminEditPage />} />
+        <Route path="/admin/edit/:slug" element={<AdminEditPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

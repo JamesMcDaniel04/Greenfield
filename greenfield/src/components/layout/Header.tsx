@@ -26,6 +26,7 @@ export default function Header() {
           <NavItem to="/">Browse</NavItem>
           {user && <NavItem to="/saved">Saved</NavItem>}
           <NavItem to="/pricing">Pricing</NavItem>
+          {profile?.is_admin && <NavItem to="/admin">Admin</NavItem>}
         </nav>
 
         <div className="flex items-center gap-2">
