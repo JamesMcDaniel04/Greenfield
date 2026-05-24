@@ -38,6 +38,7 @@ export type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   is_pro: boolean;
+  is_admin: boolean;
   pro_since: string | null;
   stripe_customer_id: string | null;
   created_at: string;
