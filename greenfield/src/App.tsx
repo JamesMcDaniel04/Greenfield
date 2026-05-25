@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import Layout from "@/components/layout/Layout";
+import MarketingLayout from "@/components/layout/MarketingLayout";
+import LandingPage from "@/pages/LandingPage";
 import BrowsePage from "@/pages/BrowsePage";
 import OpportunityDetailPage from "@/pages/OpportunityDetailPage";
 import SavedPage from "@/pages/SavedPage";
@@ -14,8 +16,14 @@ import YcRequestsPage from "@/pages/YcRequestsPage";
 export default function App() {
   return (
     <Routes>
+      {/* Public marketing shell — top nav + footer, no sidebar. */}
+      <Route element={<MarketingLayout />}>
+        <Route index element={<LandingPage />} />
+      </Route>
+
+      {/* App shell — sidebar + main. */}
       <Route element={<Layout />}>
-        <Route index element={<BrowsePage />} />
+        <Route path="/browse" element={<BrowsePage />} />
         <Route path="/opportunity/:slug" element={<OpportunityDetailPage />} />
         <Route path="/saved" element={<SavedPage />} />
         <Route path="/yc-requests" element={<YcRequestsPage />} />

@@ -110,7 +110,7 @@ export default function AuthPage() {
       </p>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        By continuing you agree to the <Link to="/" className="underline">terms</Link>.
+        By continuing you agree to the <Link to="/browse" className="underline">terms</Link>.
       </p>
     </section>
   );

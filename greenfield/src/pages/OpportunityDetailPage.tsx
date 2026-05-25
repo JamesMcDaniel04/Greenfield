@@ -52,7 +52,7 @@ export default function OpportunityDetailPage() {
       <div className="px-6 py-20 text-center max-w-2xl mx-auto">
         <h1 className="font-display text-3xl">Opportunity not found</h1>
         <p className="mt-2 text-muted-foreground">It may have been removed or the link is wrong.</p>
-        <Button asChild className="mt-6"><Link to="/">Back to catalogue</Link></Button>
+        <Button asChild className="mt-6"><Link to="/browse">Back to catalogue</Link></Button>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export default function OpportunityDetailPage() {
   return (
     <article className="px-6 md:px-10 py-8 max-w-3xl">
       <div className="flex items-center justify-between">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/browse" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>

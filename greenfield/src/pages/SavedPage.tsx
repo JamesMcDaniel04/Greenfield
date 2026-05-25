@@ -36,7 +36,7 @@ export default function SavedPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Configure Supabase in <code className="rounded bg-muted px-1 py-0.5 text-xs">.env</code> to enable accounts, then bookmark opportunities from the catalogue.
           </p>
-          <Button asChild className="mt-4"><Link to="/">Browse catalogue</Link></Button>
+          <Button asChild className="mt-4"><Link to="/browse">Browse catalogue</Link></Button>
         </div>
       </section>
     );
@@ -57,7 +57,7 @@ export default function SavedPage() {
           <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center">
             <p className="font-display text-lg">Nothing saved yet.</p>
             <p className="mt-1 text-sm text-muted-foreground">Bookmark opportunities from the catalogue and they'll land here.</p>
-            <Button asChild className="mt-4"><Link to="/">Browse catalogue</Link></Button>
+            <Button asChild className="mt-4"><Link to="/browse">Browse catalogue</Link></Button>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -8,7 +8,7 @@ export default function NotFoundPage() {
       <p className="text-sm font-medium uppercase tracking-wider text-muted-foreground">404</p>
       <h1 className="mt-2 font-display text-4xl">Off the trail.</h1>
       <p className="mt-2 text-muted-foreground">This page hasn't been built yet — or maybe it's an opportunity.</p>
-      <Button asChild className="mt-6"><Link to="/">Back to catalogue</Link></Button>
+      <Button asChild className="mt-6"><Link to="/browse">Back to catalogue</Link></Button>
     </section>
   );
 }

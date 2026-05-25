@@ -23,7 +23,7 @@ export default function Sidebar() {
       {/* Primary nav */}
       <nav className="flex-1 space-y-0.5 px-3">
         <Section label="Catalogue">
-          <Item to="/" icon={<Compass className="h-4 w-4" />}>Browse</Item>
+          <Item to="/browse" icon={<Compass className="h-4 w-4" />}>Browse</Item>
           <Item to="/saved" icon={<Bookmark className="h-4 w-4" />}>Saved</Item>
         </Section>
 
@@ -110,7 +110,7 @@ function Item({
   return (
     <NavLink
       to={to}
-      end={to === "/"}
+      end={to === "/" || to === "/browse"}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",

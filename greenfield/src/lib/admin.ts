@@ -21,7 +21,7 @@ export function useRequireAdmin(): { ready: boolean } {
       return;
     }
     if (profile && !profile.is_admin) {
-      navigate("/", { replace: true });
+      navigate("/browse", { replace: true });
     }
   }, [loading, user, profile, navigate]);
 
