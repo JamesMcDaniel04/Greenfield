@@ -14,14 +14,23 @@ test.describe("Public shell", () => {
     await expect(page.getByText(/Demo mode/i)).toBeVisible();
   });
 
-  test("/ renders the hero and filter sidebar", async ({ page }) => {
+  test("/ renders the hero and filter bar", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Opportunities");
     await expect(page.getByPlaceholder(/Search opportunities/i)).toBeVisible();
-    // Filter group headings
-    await expect(page.getByText(/^Industry$/)).toBeVisible();
-    await expect(page.getByText(/^Audience$/)).toBeVisible();
-    await expect(page.getByText(/^Difficulty$/)).toBeVisible();
+    // Filter chip buttons
+    await expect(page.getByRole("button", { name: /^Industry$/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Audience$/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Difficulty$/ })).toBeVisible();
+  });
+
+  test("filter chip opens a checkbox menu", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^Difficulty$/ }).click();
+    await expect(page.getByRole("menuitem", { name: /^Easy$/ })).toBeVisible();
+    await page.getByRole("menuitem", { name: /^Easy$/ }).click();
+    // After selecting one, the chip shows a count badge
+    await expect(page.getByRole("button", { name: /Difficulty 1/ })).toBeVisible();
   });
 
   test("/ shows sample opportunity cards in demo mode", async ({ page }) => {
