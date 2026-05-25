@@ -6,11 +6,13 @@ import { test } from "@playwright/test";
  */
 
 const PAGES = [
-  { name: "01-browse",   path: "/" },
-  { name: "02-pricing",  path: "/pricing" },
-  { name: "03-auth-signin", path: "/auth?mode=signin" },
-  { name: "04-auth-signup", path: "/auth?mode=signup" },
-  { name: "05-not-found", path: "/this-route-does-not-exist" },
+  { name: "01-browse",            path: "/" },
+  { name: "02-detail",            path: "/opportunity/solo-cpa-workflow-os" },
+  { name: "03-yc-requests",       path: "/yc-requests" },
+  { name: "04-pricing",           path: "/pricing" },
+  { name: "05-auth-signin",       path: "/auth?mode=signin" },
+  { name: "06-auth-signup",       path: "/auth?mode=signup" },
+  { name: "07-not-found",         path: "/this-route-does-not-exist" },
 ];
 
 for (const p of PAGES) {
