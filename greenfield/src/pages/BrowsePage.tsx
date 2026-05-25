@@ -4,8 +4,10 @@ import { Search, X } from "lucide-react";
 
 import OpportunityRow from "@/components/opportunities/OpportunityRow";
 import FilterChip from "@/components/opportunities/FilterChip";
+import MoreFiltersDialog from "@/components/opportunities/MoreFiltersDialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { additionalFilterCount, matchesBrowseFilters } from "@/lib/browseFilters";
 import { publishedOpportunitiesFromRows } from "@/lib/catalogue";
 import { useClaimedIdeas } from "@/lib/claims";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -47,11 +49,12 @@ export default function BrowsePage() {
     return [...new Set(visibleOpps.map((o) => o.industry))].sort((a, b) => a.localeCompare(b));
   }, [visibleOpps]);
 
-  const filtered = useMemo(() => filter(visibleOpps, filters), [visibleOpps, filters]);
+  const filtered = useMemo(() => visibleOpps.filter((opp) => matchesBrowseFilters(opp, filters)), [visibleOpps, filters]);
 
   const activeFilterCount =
     filters.industries.length + filters.audiences.length + filters.difficulties.length +
-    filters.modelTypes.length + filters.capitals.length + filters.times.length + filters.stacks.length;
+    filters.modelTypes.length + filters.capitals.length + filters.times.length + filters.stacks.length +
+    additionalFilterCount(filters);
 
   return (
     <>
@@ -126,6 +129,11 @@ export default function BrowsePage() {
               selected={filters.stacks}
               onChange={(v) => setFilters({ ...filters, stacks: v })}
             />
+            <MoreFiltersDialog
+              filters={filters}
+              setFilters={setFilters}
+              activeCount={additionalFilterCount(filters)}
+            />
 
             {activeFilterCount > 0 && (
               <Button
@@ -185,22 +193,4 @@ function EmptyState({ onClear }: { onClear: () => void }) {
       <Button variant="outline" className="mt-4" onClick={onClear}>Clear all filters</Button>
     </div>
   );
-}
-
-function filter(opps: Opportunity[], f: Filters): Opportunity[] {
-  const q = f.q.trim().toLowerCase();
-  return opps.filter((o) => {
-    if (f.industries.length   && !f.industries.includes(o.industry))            return false;
-    if (f.audiences.length    && !f.audiences.includes(o.audience))             return false;
-    if (f.difficulties.length && !f.difficulties.includes(o.difficulty))        return false;
-    if (f.modelTypes.length   && !f.modelTypes.includes(o.model_type))          return false;
-    if (f.capitals.length     && !f.capitals.includes(o.starting_capital))      return false;
-    if (f.times.length        && !f.times.includes(o.time_to_launch))           return false;
-    if (f.stacks.length       && !f.stacks.includes(o.build_stack_hint))        return false;
-    if (q) {
-      const hay = `${o.title} ${o.one_liner} ${o.the_gap} ${o.industry} ${o.niche ?? ""}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
 }

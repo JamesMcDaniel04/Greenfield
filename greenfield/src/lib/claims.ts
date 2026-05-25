@@ -108,6 +108,8 @@ export function useClaimedIdeas() {
     claims,
     activeClaim,
     activeClaimSlug: activeClaim?.opportunity_slug ?? null,
+    claimGateReason: null,
+    remainingQuota: null,
     claimOpportunity,
     unclaimOpportunity,
     toggleClaim,

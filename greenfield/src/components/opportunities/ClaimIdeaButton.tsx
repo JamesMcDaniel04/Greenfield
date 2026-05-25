@@ -117,7 +117,7 @@ export default function ClaimIdeaButton({
     >
       <Flag className="h-4 w-4" />
       Claim this idea
-      {Number.isFinite(remainingQuota) && remainingQuota > 0 && remainingQuota < 5 && (
+      {typeof remainingQuota === "number" && remainingQuota > 0 && remainingQuota < 5 && (
         <span className="ml-1 text-xs opacity-70">({remainingQuota} left)</span>
       )}
     </Button>

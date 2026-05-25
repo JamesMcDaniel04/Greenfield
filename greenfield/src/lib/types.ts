@@ -131,6 +131,13 @@ export type Filters = {
   capitals: string[];
   times: string[];
   stacks: string[];
+  timeToMvp: string[];
+  buildMethods: string[];
+  teamSizes: string[];
+  founderBackgrounds: string[];
+  domainLearningTimes: string[];
+  barriersToEntry: string[];
+  acquisitionChannels: string[];
 };
 
 export const emptyFilters: Filters = {
@@ -142,4 +149,11 @@ export const emptyFilters: Filters = {
   capitals: [],
   times: [],
   stacks: [],
+  timeToMvp: [],
+  buildMethods: [],
+  teamSizes: [],
+  founderBackgrounds: [],
+  domainLearningTimes: [],
+  barriersToEntry: [],
+  acquisitionChannels: [],
 };
