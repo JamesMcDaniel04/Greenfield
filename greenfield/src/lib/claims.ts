@@ -6,16 +6,10 @@ import { claimFromOpportunity, type ClaimedIdea } from "@/lib/execution";
 const CLAIMS_KEY = "greenfield.claimedIdeas";
 const ACTIVE_KEY = "greenfield.activeClaimSlug";
 const CHANGE_EVENT = "greenfield:claims-changed";
+const EMPTY_CLAIMS: ClaimedIdea[] = [];
 
-function readJson<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
-  } catch {
-    return fallback;
-  }
-}
+let claimsCacheRaw: string | null = null;
+let claimsCacheValue: ClaimedIdea[] = EMPTY_CLAIMS;
 
 function dispatchChange() {
   if (typeof window === "undefined") return;
@@ -34,7 +28,20 @@ function subscribe(onStoreChange: () => void) {
 }
 
 function readClaimsSnapshot(): ClaimedIdea[] {
-  return readJson<ClaimedIdea[]>(CLAIMS_KEY, []);
+  if (typeof window === "undefined") return EMPTY_CLAIMS;
+  const raw = window.localStorage.getItem(CLAIMS_KEY);
+  if (raw === claimsCacheRaw) return claimsCacheValue;
+  claimsCacheRaw = raw;
+  if (!raw) {
+    claimsCacheValue = EMPTY_CLAIMS;
+    return claimsCacheValue;
+  }
+  try {
+    claimsCacheValue = JSON.parse(raw) as ClaimedIdea[];
+  } catch {
+    claimsCacheValue = EMPTY_CLAIMS;
+  }
+  return claimsCacheValue;
 }
 
 function readActiveSnapshot(): string | null {
@@ -44,7 +51,10 @@ function readActiveSnapshot(): string | null {
 
 function writeClaimsSnapshot(next: ClaimedIdea[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(CLAIMS_KEY, JSON.stringify(next));
+  const raw = JSON.stringify(next);
+  claimsCacheRaw = raw;
+  claimsCacheValue = next;
+  window.localStorage.setItem(CLAIMS_KEY, raw);
   dispatchChange();
 }
 

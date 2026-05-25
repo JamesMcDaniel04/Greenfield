@@ -70,6 +70,36 @@ export type Opportunity = {
   updated_at: string;
 };
 
+export type PlanTier = "scout" | "entrepreneur" | "venture_studio" | "university";
+
+export type Team = {
+  id: string;
+  name: string;
+  plan: PlanTier;
+  claims_per_week_quota: number;
+  seat_limit: number;
+  stripe_subscription_id: string | null;
+  created_at: string;
+};
+
+export type TeamMember = {
+  team_id: string;
+  user_id: string;
+  role: "owner" | "member";
+  joined_at: string;
+};
+
+export type IdeaClaim = {
+  id: string;
+  opportunity_id: string;
+  team_id: string;
+  claimed_by: string;
+  status: "active" | "released" | "expired";
+  claimed_at: string;
+  released_at: string | null;
+  expires_at: string | null;
+};
+
 export type Profile = {
   user_id: string;
   display_name: string | null;
@@ -78,6 +108,8 @@ export type Profile = {
   is_admin: boolean;
   pro_since: string | null;
   stripe_customer_id: string | null;
+  personal_team_id: string | null;
+  plan: PlanTier;
   created_at: string;
 };
 
