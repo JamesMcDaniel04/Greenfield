@@ -29,6 +29,9 @@ export type Opportunity = {
   rank: number;
   cover_image_url: string | null;
 
+  /** Slug of a YC Request for Startups topic this opportunity is seeded by. */
+  yc_rfs_slug: string | null;
+
   created_at: string;
   updated_at: string;
 };

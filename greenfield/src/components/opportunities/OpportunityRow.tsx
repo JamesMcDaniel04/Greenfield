@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Star } from "lucide-react";
+import { ArrowUpRight, Rocket, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import Sparkline from "./Sparkline";
@@ -22,7 +22,13 @@ export default function OpportunityRow({ opp }: { opp: Opportunity }) {
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
-          {opp.featured && (
+          {opp.yc_rfs_slug && (
+            <Badge className="gap-1 bg-accent/90 text-accent-foreground hover:bg-accent">
+              <Rocket className="h-3 w-3" />
+              YC Request
+            </Badge>
+          )}
+          {opp.featured && !opp.yc_rfs_slug && (
             <Badge variant="default" className="gap-1 bg-accent/90 text-accent-foreground hover:bg-accent">
               <Star className="h-3 w-3 fill-current" />
               Featured
