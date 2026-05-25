@@ -1,5 +1,7 @@
-import { useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
+import { useRemoteClaims } from "@/lib/claimsRemote";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Opportunity } from "@/lib/types";
 import { claimFromOpportunity, type ClaimedIdea } from "@/lib/execution";
 
@@ -10,6 +12,33 @@ const EMPTY_CLAIMS: ClaimedIdea[] = [];
 
 let claimsCacheRaw: string | null = null;
 let claimsCacheValue: ClaimedIdea[] = EMPTY_CLAIMS;
+
+/**
+ * Public API for claim state. Backed by either localStorage (demo / no Supabase)
+ * or the Supabase `idea_claims` table via the `claim-idea` / `release-claim`
+ * edge functions (real mode).
+ */
+export type ClaimsApi = {
+  claims: ClaimedIdea[];
+  activeClaim: ClaimedIdea | null;
+  activeClaimSlug: string | null;
+  /** Remaining claim slots this week. `Infinity` in demo mode. */
+  remainingQuota: number;
+  /** Reason a claim button should be disabled, or null when claiming is allowed. */
+  claimGateReason: ClaimGateReason;
+  claimOpportunity: (opp: Opportunity) => Promise<void> | void;
+  unclaimOpportunity: (slug: string) => Promise<void> | void;
+  toggleClaim: (opp: Opportunity) => Promise<void> | void;
+  setActiveClaim: (slug: string) => void;
+  isClaimed: (slug: string) => boolean;
+};
+
+export type ClaimGateReason =
+  | null
+  | "needs_account"
+  | "plan_lacks_claiming"
+  | "quota_exhausted"
+  | "no_team";
 
 function dispatchChange() {
   if (typeof window === "undefined") return;
@@ -65,55 +94,61 @@ function writeActiveSnapshot(slug: string | null) {
   dispatchChange();
 }
 
-export function useClaimedIdeas() {
-  const claims = useSyncExternalStore(subscribe, readClaimsSnapshot, () => []);
+function useLocalClaims(): ClaimsApi {
+  const claims = useSyncExternalStore(subscribe, readClaimsSnapshot, () => EMPTY_CLAIMS);
   const activeClaimSlug = useSyncExternalStore(subscribe, readActiveSnapshot, () => null);
-  const activeClaim = claims.find((claim) => claim.opportunity_slug === activeClaimSlug) ?? claims[0] ?? null;
+  const activeClaim =
+    claims.find((c) => c.opportunity_slug === activeClaimSlug) ?? claims[0] ?? null;
 
-  function setActiveClaim(slug: string) {
-    const exists = claims.some((claim) => claim.opportunity_slug === slug);
-    if (!exists) return;
-    writeActiveSnapshot(slug);
-  }
+  const setActiveClaim = useCallback((slug: string) => {
+    if (claims.some((c) => c.opportunity_slug === slug)) writeActiveSnapshot(slug);
+  }, [claims]);
 
-  function claimOpportunity(opportunity: Opportunity) {
-    const nextClaim = claimFromOpportunity(opportunity);
-    const existing = claims.find((claim) => claim.opportunity_slug === opportunity.slug);
-    const next = existing
-      ? claims.map((claim) => (claim.opportunity_slug === opportunity.slug ? nextClaim : claim))
-      : [nextClaim, ...claims];
-    writeClaimsSnapshot(next);
-    writeActiveSnapshot(opportunity.slug);
-  }
+  const claimOpportunity = useCallback((opp: Opportunity) => {
+    const next = claimFromOpportunity(opp);
+    const existing = claims.find((c) => c.opportunity_slug === opp.slug);
+    writeClaimsSnapshot(existing
+      ? claims.map((c) => (c.opportunity_slug === opp.slug ? next : c))
+      : [next, ...claims]);
+    writeActiveSnapshot(opp.slug);
+  }, [claims]);
 
-  function unclaimOpportunity(slug: string) {
-    const next = claims.filter((claim) => claim.opportunity_slug !== slug);
+  const unclaimOpportunity = useCallback((slug: string) => {
+    const next = claims.filter((c) => c.opportunity_slug !== slug);
     writeClaimsSnapshot(next);
     if (activeClaimSlug === slug) {
       writeActiveSnapshot(next[0]?.opportunity_slug ?? null);
     }
-  }
+  }, [claims, activeClaimSlug]);
 
-  function toggleClaim(opportunity: Opportunity) {
-    const claimed = claims.some((claim) => claim.opportunity_slug === opportunity.slug);
-    if (claimed) unclaimOpportunity(opportunity.slug);
-    else claimOpportunity(opportunity);
-  }
+  const toggleClaim = useCallback((opp: Opportunity) => {
+    const claimed = claims.some((c) => c.opportunity_slug === opp.slug);
+    if (claimed) unclaimOpportunity(opp.slug);
+    else claimOpportunity(opp);
+  }, [claims, claimOpportunity, unclaimOpportunity]);
 
-  function isClaimed(slug: string) {
-    return claims.some((claim) => claim.opportunity_slug === slug);
-  }
+  const isClaimed = useCallback(
+    (slug: string) => claims.some((c) => c.opportunity_slug === slug),
+    [claims],
+  );
 
   return {
     claims,
     activeClaim,
     activeClaimSlug: activeClaim?.opportunity_slug ?? null,
+    remainingQuota: Number.POSITIVE_INFINITY,
     claimGateReason: null,
-    remainingQuota: null,
     claimOpportunity,
     unclaimOpportunity,
     toggleClaim,
     setActiveClaim,
     isClaimed,
   };
+}
+
+export function useClaimedIdeas(): ClaimsApi {
+  // Hooks must be called unconditionally — call both, return the right one.
+  const remote = useRemoteClaims();
+  const local = useLocalClaims();
+  return isSupabaseConfigured ? remote : local;
 }

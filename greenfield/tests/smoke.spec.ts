@@ -19,14 +19,18 @@ test.describe("Marketing landing (/)", () => {
     await page.goto("/");
     // Hero
     await expect(page.getByRole("heading", { level: 1 })).toContainText(/startup/i);
-    await expect(page.getByRole("link", { name: /Browse the catalogue/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Get instant access/i }).first()).toBeVisible();
     // Featured opportunity (one of the fixture titles)
     await expect(page.getByRole("heading", { name: /Workflow OS for solo CPAs/i })).toBeVisible();
-    // Pricing section
-    await expect(page.getByRole("heading", { name: /^Starter$/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /^Team$/ })).toBeVisible();
-    await expect(page.getByText("$99")).toBeVisible();
-    await expect(page.getByText("$350")).toBeVisible();
+    // Pricing section — all three self-serve tiers visible
+    await expect(page.getByRole("heading", { name: /^Scout$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Entrepreneur$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Venture Studio$/ })).toBeVisible();
+    await expect(page.getByText("$97").first()).toBeVisible();
+    await expect(page.getByText("$197").first()).toBeVisible();
+    await expect(page.getByText("$12,000").first()).toBeVisible();
+    // No free tier
+    await expect(page.getByText("$0")).toHaveCount(0);
     // FAQ
     await expect(page.getByText(/Where do the opportunities come from/i)).toBeVisible();
   });
@@ -39,10 +43,10 @@ test.describe("Marketing landing (/)", () => {
     await expect(banner.getByRole("link", { name: /^Get started$/ })).toBeVisible();
   });
 
-  test("clicking 'Browse the catalogue' navigates to /browse", async ({ page }) => {
+  test("hero CTA navigates to signup", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /Browse the catalogue/i }).first().click();
-    await expect(page).toHaveURL(/\/browse$/);
+    await page.getByRole("link", { name: /Get instant access/i }).first().click();
+    await expect(page).toHaveURL(/\/auth\?mode=signup/);
   });
 });
 
@@ -69,6 +73,32 @@ test.describe("Catalogue (/browse)", () => {
     await expect(page.getByRole("heading", { name: /Workflow OS for solo CPAs/i })).toBeVisible();
     await expect(page.getByText(/\d+ opportunities/i).first()).toBeVisible();
   });
+
+  test("claiming an opportunity hides it from /browse (demo mode)", async ({ page }) => {
+    // Make sure we start from a clean localStorage so prior runs don't pollute.
+    await page.goto("/browse");
+    await page.evaluate(() => {
+      localStorage.removeItem("greenfield.claimedIdeas");
+      localStorage.removeItem("greenfield.activeClaimSlug");
+    });
+    await page.reload();
+
+    const opp = "Workflow OS for solo CPAs";
+    await expect(page.getByRole("heading", { name: opp })).toBeVisible();
+
+    await page.goto("/opportunity/solo-cpa-workflow-os");
+    await page.getByRole("button", { name: /^Claim idea$/ }).first().click();
+
+    await page.goto("/browse");
+    await expect(page.getByRole("heading", { name: opp })).toHaveCount(0);
+    await expect(page.getByText(/1 hidden \(claimed by you\)/)).toBeVisible();
+
+    // Cleanup for subsequent tests.
+    await page.evaluate(() => {
+      localStorage.removeItem("greenfield.claimedIdeas");
+      localStorage.removeItem("greenfield.activeClaimSlug");
+    });
+  });
 });
 
 test.describe("YC requests", () => {
@@ -90,12 +120,15 @@ test.describe("Detail page", () => {
 });
 
 test.describe("Pricing", () => {
-  test("/pricing shows Starter and Team tiers", async ({ page }) => {
+  test("/pricing shows Scout, Entrepreneur, Venture Studio + University", async ({ page }) => {
     await page.goto("/pricing");
-    await expect(page.getByRole("heading", { name: /^Starter$/ })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /^Team$/ })).toBeVisible();
-    await expect(page.getByText("$99")).toBeVisible();
-    await expect(page.getByText("$350")).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Scout$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Entrepreneur$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^Venture Studio$/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /University/i })).toBeVisible();
+    await expect(page.getByText("$97").first()).toBeVisible();
+    await expect(page.getByText("$197").first()).toBeVisible();
+    await expect(page.getByText("$12,000").first()).toBeVisible();
     await expect(page.getByText("$0")).toHaveCount(0);
   });
 });

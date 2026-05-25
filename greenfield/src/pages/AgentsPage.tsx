@@ -66,52 +66,29 @@ export default function AgentsPage() {
 
   return (
     <>
-      <section className="border-b border-border/60 bg-[radial-gradient(circle_at_top_left,_rgba(20,83,45,0.14),_transparent_32%),radial-gradient(circle_at_top_right,_rgba(234,88,12,0.12),_transparent_28%)]">
-        <div className="max-w-6xl px-6 py-10 md:px-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-primary">Agents for hire</p>
-              <h1 className="font-display text-3xl leading-tight md:text-4xl">
-                A four-agent startup team, tailored to the idea you claimed.
-              </h1>
-              <p className="mt-3 text-base text-muted-foreground">
-                Each claimed idea gets a simple operating team: GTM, Sales, Marketing, and Engineering.
-                The agents share one opportunity brief, work inside narrow instructions, and use only a few relevant tools.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 text-sm">
-              <Snapshot label="Agents" value="4" />
-              <Snapshot label="Claimed ideas" value={String(claims.length)} />
-              <Snapshot label="Suggested workflows" value={String(recommended.length || 3)} />
-            </div>
-          </div>
-
-          {activeClaim ? (
-            <div className="mt-6 rounded-2xl border border-primary/15 bg-card/80 p-5 shadow-sm">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Active claimed idea</p>
-                  <h2 className="mt-1 font-display text-2xl">{activeClaim.title}</h2>
-                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{activeClaim.one_liner}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline">
-                    <Link to={`/opportunity/${activeClaim.opportunity_slug}`}>View opportunity</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to={`/workflows?idea=${encodeURIComponent(activeClaim.opportunity_slug)}`}>
-                      Open workflows <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
+      <section className="max-w-6xl px-6 py-8 md:px-10">
+        {activeClaim ? (
+          <div className="mb-6 rounded-2xl border border-primary/15 bg-card p-5 shadow-sm">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Active claimed idea</p>
+                <h1 className="mt-1 font-display text-2xl">{activeClaim.title}</h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{activeClaim.one_liner}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild variant="outline">
+                  <Link to={`/opportunity/${activeClaim.opportunity_slug}`}>View opportunity</Link>
+                </Button>
+                <Button asChild>
+                  <Link to={`/workflows?idea=${encodeURIComponent(activeClaim.opportunity_slug)}`}>
+                    Open workflows <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
             </div>
-          ) : null}
-        </div>
-      </section>
+          </div>
+        ) : null}
 
-      <section className="max-w-6xl px-6 py-8 md:px-10">
         {claims.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {claims.map((claim) => (
@@ -234,15 +211,6 @@ export default function AgentsPage() {
         </div>
       </section>
     </>
-  );
-}
-
-function Snapshot({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border bg-card/80 px-4 py-3 shadow-sm">
-      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-2xl">{value}</p>
-    </div>
   );
 }
 

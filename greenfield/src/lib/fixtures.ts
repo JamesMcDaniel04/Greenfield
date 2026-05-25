@@ -889,9 +889,9 @@ export const ALL_SAMPLE_OPPORTUNITIES: Opportunity[] = [
   ...RESEARCH_OPPORTUNITIES,
 ];
 
-export const SAMPLE_OPPORTUNITIES: Opportunity[] = ALL_SAMPLE_OPPORTUNITIES.filter(
-  (opp) => opp.sources.length > 0,
-);
+// Every fixture is shown; sources are optional context, not a visibility gate.
+// (Opportunities without cited sources render the "no sources yet" empty state.)
+export const SAMPLE_OPPORTUNITIES: Opportunity[] = ALL_SAMPLE_OPPORTUNITIES;
 
 /**
  * A few sample build briefs so the Pro flow is demoable. Keyed by opportunity slug.
