@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import SaveButton from "@/components/opportunities/SaveButton";
 import BuildBriefPanel from "@/components/opportunities/BuildBriefPanel";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import type { Opportunity } from "@/lib/types";
 import { DIFFICULTY_TONE } from "@/lib/vocab";
 import { cn } from "@/lib/utils";
@@ -16,9 +17,12 @@ export default function OpportunityDetailPage() {
   const { slug } = useParams<{ slug: string }>();
 
   const { data: opp, isLoading, error } = useQuery({
-    queryKey: ["opportunity", slug],
+    queryKey: ["opportunity", slug, isSupabaseConfigured],
     enabled: !!slug,
     queryFn: async () => {
+      if (!isSupabaseConfigured) {
+        return SAMPLE_OPPORTUNITIES.find((o) => o.slug === slug) ?? null;
+      }
       const { data, error } = await supabase
         .from("opportunities")
         .select("*")

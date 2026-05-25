@@ -9,7 +9,8 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { SAMPLE_BUILD_BRIEFS } from "@/lib/fixtures";
 import { useAuth } from "@/lib/auth";
 
 type Props = {
@@ -27,17 +28,20 @@ type Props = {
  */
 export default function BuildBriefPanel({ opportunityId, opportunitySlug, opportunityTitle }: Props) {
   const { user, profile } = useAuth();
+  // In demo mode we let everyone see the sample briefs so the Pro flow is demoable.
+  const demoMode = !isSupabaseConfigured;
   const isPro = !!profile?.is_pro;
   const isAdmin = !!profile?.is_admin;
-  const canAccess = isPro || isAdmin;
+  const canAccess = demoMode || isPro || isAdmin;
   const [open, setOpen] = useState(false);
   const qc = useQueryClient();
 
   // 1. Try the cache first (RLS already gates this to Pro/admin readers)
   const cacheQ = useQuery({
-    queryKey: ["build-brief-cache", opportunityId],
+    queryKey: ["build-brief-cache", opportunityId, demoMode],
     enabled: canAccess,
     queryFn: async () => {
+      if (demoMode) return SAMPLE_BUILD_BRIEFS[opportunitySlug] ?? null;
       const { data, error } = await supabase
         .from("build_briefs")
         .select("markdown")
@@ -52,6 +56,9 @@ export default function BuildBriefPanel({ opportunityId, opportunitySlug, opport
   //    we don't want a page view to silently spend tokens.
   const generate = useMutation({
     mutationFn: async (opts?: { force?: boolean }) => {
+      if (demoMode) {
+        throw new Error("On-demand generation requires Supabase + the deployed edge function.");
+      }
       const { data, error } = await supabase.functions.invoke<{ markdown: string; cached: boolean }>(
         "generate-brief",
         { body: { opportunity_id: opportunityId, force: opts?.force } },
@@ -61,7 +68,7 @@ export default function BuildBriefPanel({ opportunityId, opportunitySlug, opport
       return data;
     },
     onSuccess: (data) => {
-      qc.setQueryData(["build-brief-cache", opportunityId], data.markdown);
+      qc.setQueryData(["build-brief-cache", opportunityId, demoMode], data.markdown);
       toast.success(data.cached ? "Loaded from cache" : "Brief generated");
     },
     onError: (e: Error) => toast.error(e.message),

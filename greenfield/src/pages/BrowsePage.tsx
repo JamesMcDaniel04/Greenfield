@@ -3,15 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 
 import OpportunityCard from "@/components/opportunities/OpportunityCard";
 import FilterSidebar from "@/components/opportunities/FilterSidebar";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import { emptyFilters, type Filters, type Opportunity } from "@/lib/types";
 
 export default function BrowsePage() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
 
   const { data: opps = [], isLoading } = useQuery({
-    queryKey: ["opportunities"],
+    queryKey: ["opportunities", isSupabaseConfigured],
     queryFn: async () => {
+      if (!isSupabaseConfigured) return SAMPLE_OPPORTUNITIES;
       const { data, error } = await supabase
         .from("opportunities")
         .select("*")

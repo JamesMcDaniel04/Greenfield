@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function SaveButton({ opportunityId }: { opportunityId: string }) {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ export default function SaveButton({ opportunityId }: { opportunityId: string })
 
   const { data: isSaved = false } = useQuery({
     queryKey: ["saved", user?.id, opportunityId],
-    enabled: !!user,
+    enabled: !!user && isSupabaseConfigured,
     queryFn: async () => {
       const { data } = await supabase
         .from("saved_opportunities")
@@ -50,6 +50,18 @@ export default function SaveButton({ opportunityId }: { opportunityId: string })
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  if (!isSupabaseConfigured) {
+    return (
+      <Button
+        variant="outline"
+        onClick={() => toast.info("Saving requires Supabase — configure .env to enable accounts.")}
+      >
+        <Bookmark className="h-4 w-4" />
+        Save
+      </Button>
+    );
+  }
 
   if (!user) {
     return (
