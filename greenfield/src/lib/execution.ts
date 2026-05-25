@@ -3,6 +3,8 @@ import type { Opportunity } from "@/lib/types";
 export type AgentRole = "gtm" | "sales" | "marketing" | "engineering";
 
 export type ClaimedIdea = {
+  /** Supabase idea_claims.id when persisted; absent in demo/localStorage mode. */
+  claim_id?: string;
   opportunity_id: string;
   opportunity_slug: string;
   title: string;

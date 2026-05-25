@@ -7,6 +7,7 @@ import FilterChip from "@/components/opportunities/FilterChip";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { publishedOpportunitiesFromRows } from "@/lib/catalogue";
+import { useClaimedIdeas } from "@/lib/claims";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import { VOCAB } from "@/lib/vocab";
@@ -14,13 +15,16 @@ import { emptyFilters, type Filters, type Opportunity } from "@/lib/types";
 
 export default function BrowsePage() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const { claims } = useClaimedIdeas();
 
   const { data: opps = [], isLoading } = useQuery({
     queryKey: ["opportunities", isSupabaseConfigured],
     queryFn: async () => {
       if (!isSupabaseConfigured) return SAMPLE_OPPORTUNITIES;
+      // visible_opportunities view filters out actively-claimed-by-others rows
+      // at the DB layer (security_invoker means RLS still applies per user).
       const { data, error } = await supabase
-        .from("opportunities")
+        .from("visible_opportunities")
         .select("*")
         .order("featured", { ascending: false })
         .order("rank", { ascending: true });
@@ -29,11 +33,21 @@ export default function BrowsePage() {
     },
   });
 
-  const industries = useMemo(() => {
-    return [...new Set(opps.map((o) => o.industry))].sort((a, b) => a.localeCompare(b));
-  }, [opps]);
+  // Demo-mode fallback: in localStorage mode the SQL view doesn't exist, so we
+  // hide claimed-by-me slugs client-side. (In Supabase mode the view already
+  // hides claimed-by-others; claimed-by-me stays visible so the user can find
+  // their workspace from the catalogue.)
+  const visibleOpps = useMemo(() => {
+    if (isSupabaseConfigured) return opps;
+    const claimedSlugs = new Set(claims.map((c) => c.opportunity_slug));
+    return opps.filter((o) => !claimedSlugs.has(o.slug));
+  }, [opps, claims]);
 
-  const filtered = useMemo(() => filter(opps, filters), [opps, filters]);
+  const industries = useMemo(() => {
+    return [...new Set(visibleOpps.map((o) => o.industry))].sort((a, b) => a.localeCompare(b));
+  }, [visibleOpps]);
+
+  const filtered = useMemo(() => filter(visibleOpps, filters), [visibleOpps, filters]);
 
   const activeFilterCount =
     filters.industries.length + filters.audiences.length + filters.difficulties.length +
@@ -135,8 +149,11 @@ export default function BrowsePage() {
             <span className="font-medium">{isLoading ? "…" : filtered.length}</span>
             <span className="text-muted-foreground">
               {" "}opportunit{filtered.length === 1 ? "y" : "ies"}
-              {filtered.length !== opps.length && opps.length > 0 && (
-                <> · filtered from {opps.length}</>
+              {filtered.length !== visibleOpps.length && visibleOpps.length > 0 && (
+                <> · filtered from {visibleOpps.length}</>
+              )}
+              {claims.length > 0 && (
+                <> · {claims.length} hidden (claimed by you)</>
               )}
             </span>
           </p>

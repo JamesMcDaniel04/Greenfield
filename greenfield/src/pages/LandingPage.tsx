@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Compass, FileText, Filter, Lock, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Compass, FileText, Filter, Lock, Mail, Rocket, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import OpportunityRow from "@/components/opportunities/OpportunityRow";
 import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
-import { TIERS } from "@/lib/pricing";
+import { SELF_SERVE_TIERS, TIER_BY_PLAN, type PricingTier } from "@/lib/pricing";
 
 const PREVIEW_COUNT = 10;
 
@@ -44,7 +44,7 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            From $99/year. Preview {previewCount} opportunities below — sign up to unlock the rest.
+            From $97/year. Preview {previewCount} opportunities below — sign up to unlock the rest.
           </p>
         </div>
       </section>
@@ -93,7 +93,7 @@ export default function LandingPage() {
                 </h3>
                 <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
                   Full briefs, filters, saved lists, and downloadable Markdown specs.
-                  Starter is $99/year — cancel anytime.
+                  Scout is $97/year — cancel anytime.
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <Button asChild>
@@ -148,66 +148,17 @@ export default function LandingPage() {
         <div className="container-wide py-16">
           <div className="text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">Pricing</p>
-            <h2 className="mt-1 font-display text-2xl md:text-3xl">Annual plans. No metered usage.</h2>
+            <h2 className="mt-1 font-display text-2xl md:text-3xl">Choose your plan.</h2>
             <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-              Pick a plan and unlock the full catalogue, downloadable briefs, and — on Team — research agents, lead gen, and weekly market reports.
+              Browse on Scout, claim and run agents on Entrepreneur, or bring a studio team on Venture Studio.
             </p>
           </div>
 
-          <div className="mt-10 mx-auto max-w-4xl grid gap-6 md:grid-cols-2">
-            {TIERS.map((tier) => (
-              <div
-                key={tier.name}
-                className={
-                  "relative flex flex-col rounded-2xl border p-6 " +
-                  (tier.highlight
-                    ? "border-primary/50 bg-gradient-to-br from-primary/[0.05] to-accent/[0.07] shadow-md"
-                    : "bg-card")
-                }
-              >
-                {tier.highlight && (
-                  <Badge className="absolute -top-3 left-6 bg-accent text-accent-foreground hover:bg-accent">
-                    Most teams pick this
-                  </Badge>
-                )}
-                <div className="flex items-baseline justify-between gap-2">
-                  <h3 className="font-display text-2xl">{tier.name}</h3>
-                  {tier.highlight && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-accent-foreground">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Includes Team features
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
-
-                <div className="mt-5 flex items-baseline gap-1">
-                  <span className="font-display text-4xl">{tier.priceLabel}</span>
-                  <span className="text-sm text-muted-foreground">{tier.per}</span>
-                </div>
-
-                <ul className="mt-6 flex-1 space-y-2.5 text-sm">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  asChild
-                  variant={tier.highlight ? "default" : "outline"}
-                  className="mt-7 w-full"
-                >
-                  <Link to={`/auth?mode=signup&plan=${tier.name.toLowerCase()}`}>
-                    <Lock className="h-4 w-4" />
-                    Start {tier.name}
-                  </Link>
-                </Button>
-              </div>
-            ))}
+          <div className="mt-10 mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
+            {SELF_SERVE_TIERS.map((tier) => <LandingTierCard key={tier.plan} tier={tier} />)}
           </div>
+
+          <UniversityCard tier={TIER_BY_PLAN.university} />
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
             Annual billing only. Cancel anytime — access stays active through the end of the term.
@@ -228,8 +179,12 @@ export default function LandingPage() {
               a="A mix of structural analysis (looking for industries with unmet demand signals and recently-shifted economics) and curation from the team's network. Some are seeded by external lists — YC's Requests for Startups — but every brief is written from scratch."
             />
             <Faq
-              q="What's the difference between Starter and Team?"
-              a="Starter gives one founder full access to the catalogue and downloadable briefs. Team adds research agents (point one at an industry, get back populated opportunities), lead gen, weekly market reports, and up to 5 seats."
+              q="What's the difference between Scout, Entrepreneur, and Venture Studio?"
+              a="Scout ($97/yr) gives one founder full access to the catalogue and downloadable briefs. Entrepreneur ($197/yr) adds one exclusive idea claim per year — when you claim an idea it disappears from everyone else's catalogue and unlocks a four-agent team (GTM, Sales, Marketing, Engineering) tailored to that idea. Venture Studio ($12,000/yr) is the same but for a 5-seat team with 10 claims/week shared across the team."
+            />
+            <Faq
+              q="What does 'claim an idea' actually do?"
+              a="It hides the opportunity from everyone else on the platform, opens a private workspace for you, and spins up four agents (GTM, Sales, Marketing, Engineering) that are pre-configured with the idea's audience, market, and build path. Release the claim at any time and the idea returns to the public catalogue."
             />
             <Faq
               q="Can I export the briefs to use them offline?"
@@ -264,6 +219,76 @@ export default function LandingPage() {
         </div>
       </section>
     </>
+  );
+}
+
+function LandingTierCard({ tier }: { tier: PricingTier }) {
+  const mailto = `mailto:hello@greenfield.app?subject=${encodeURIComponent(`${tier.name} inquiry`)}`;
+  const signupHref = `/auth?mode=signup&plan=${tier.plan}`;
+  return (
+    <div
+      className={
+        "relative flex flex-col rounded-2xl border p-6 " +
+        (tier.highlight
+          ? "border-primary/50 bg-gradient-to-br from-primary/[0.05] to-accent/[0.07] shadow-md"
+          : "bg-card")
+      }
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="font-display text-2xl">{tier.name}</h3>
+        {tier.highlight && (
+          <Badge className="bg-accent text-accent-foreground hover:bg-accent">Recommended</Badge>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
+
+      <div className="mt-5 flex items-baseline gap-1">
+        <span className="font-display text-4xl">{tier.priceLabel}</span>
+        <span className="text-sm text-muted-foreground">{tier.per}</span>
+      </div>
+      {tier.priceFootnote && <p className="mt-0.5 text-xs text-primary">{tier.priceFootnote}</p>}
+
+      <ul className="mt-6 flex-1 space-y-2.5 text-sm">
+        {tier.features.map((f) => (
+          <li key={f} className="flex items-start gap-2">
+            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+
+      <Button asChild variant={tier.highlight ? "default" : "outline"} className="mt-7 w-full">
+        {tier.contactOnly ? (
+          <a href={mailto}><Mail className="h-4 w-4" />{tier.cta}</a>
+        ) : (
+          <Link to={signupHref}><Lock className="h-4 w-4" />{tier.cta}</Link>
+        )}
+      </Button>
+      <p className="mt-2 text-center text-xs text-muted-foreground">Cancel anytime. No questions asked.</p>
+    </div>
+  );
+}
+
+function UniversityCard({ tier }: { tier: PricingTier }) {
+  const mailto = `mailto:hello@greenfield.app?subject=${encodeURIComponent(`${tier.name} inquiry`)}`;
+  return (
+    <div className="mx-auto mt-6 max-w-6xl rounded-2xl border bg-card p-6 md:flex md:items-center md:justify-between md:gap-8">
+      <div>
+        <h3 className="font-display text-xl">{tier.name}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
+        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          {tier.features.map((f) => (
+            <li key={f} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-primary" />
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <Button asChild className="mt-4 md:mt-0">
+        <a href={mailto}><Mail className="h-4 w-4" />{tier.cta}</a>
+      </Button>
+    </div>
   );
 }
 
