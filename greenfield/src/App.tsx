@@ -9,6 +9,7 @@ import PricingPage from "@/pages/PricingPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import AdminListPage from "@/pages/admin/AdminListPage";
 import AdminEditPage from "@/pages/admin/AdminEditPage";
+import YcRequestsPage from "@/pages/YcRequestsPage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route index element={<BrowsePage />} />
         <Route path="/opportunity/:slug" element={<OpportunityDetailPage />} />
         <Route path="/saved" element={<SavedPage />} />
+        <Route path="/yc-requests" element={<YcRequestsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/admin" element={<AdminListPage />} />

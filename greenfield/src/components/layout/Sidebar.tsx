@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
-  Bookmark, Compass, LayoutGrid, LogOut, Mail, ShieldCheck, Sparkles, User,
+  Bookmark, Compass, LayoutGrid, LogOut, Mail, Rocket, ShieldCheck, Sparkles, User,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -24,6 +24,10 @@ export default function Sidebar() {
         <Section label="Catalogue">
           <Item to="/" icon={<Compass className="h-4 w-4" />}>Browse</Item>
           <Item to="/saved" icon={<Bookmark className="h-4 w-4" />}>Saved</Item>
+        </Section>
+
+        <Section label="External">
+          <Item to="/yc-requests" icon={<Rocket className="h-4 w-4" />}>YC Requests</Item>
         </Section>
 
         <Section label="Account">
