@@ -12,6 +12,9 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import AdminListPage from "@/pages/admin/AdminListPage";
 import AdminEditPage from "@/pages/admin/AdminEditPage";
 import YcRequestsPage from "@/pages/YcRequestsPage";
+import AgentsPage from "@/pages/AgentsPage";
+import WorkflowsPage from "@/pages/WorkflowsPage";
+import WorkflowDetailPage from "@/pages/WorkflowDetailPage";
 
 export default function App() {
   return (
@@ -26,6 +29,9 @@ export default function App() {
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/opportunity/:slug" element={<OpportunityDetailPage />} />
         <Route path="/saved" element={<SavedPage />} />
+        <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/workflows" element={<WorkflowsPage />} />
+        <Route path="/workflows/:slug" element={<WorkflowDetailPage />} />
         <Route path="/yc-requests" element={<YcRequestsPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/auth" element={<AuthPage />} />

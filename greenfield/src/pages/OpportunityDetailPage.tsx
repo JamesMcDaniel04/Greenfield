@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import Sparkline from "@/components/opportunities/Sparkline";
 import SaveButton from "@/components/opportunities/SaveButton";
+import ClaimIdeaButton from "@/components/opportunities/ClaimIdeaButton";
 import BuildBriefPanel from "@/components/opportunities/BuildBriefPanel";
 import SourcesSection from "@/components/opportunities/SourcesSection";
 import { publishedOpportunityFromRow } from "@/lib/catalogue";
@@ -65,7 +66,10 @@ export default function OpportunityDetailPage() {
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
-        <SaveButton opportunityId={opp.id} />
+        <div className="flex items-center gap-2">
+          <ClaimIdeaButton opportunity={opp} variant="outline" size="sm" />
+          <SaveButton opportunityId={opp.id} />
+        </div>
       </div>
 
       {/* Hero */}
@@ -122,6 +126,26 @@ export default function OpportunityDetailPage() {
       <Section title="Market size"    body={opp.market_size_summary} />
       <Section title="Why now"        body={opp.timing_rationale} />
       <Section title="How to build it" body={opp.build_path} />
+
+      <Separator className="my-10" />
+
+      <section className="rounded-2xl border bg-gradient-to-br from-primary/[0.06] via-card to-accent/[0.08] p-5">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Execution stack</p>
+        <h2 className="mt-2 font-display text-2xl">Claim this idea, then activate the team around it.</h2>
+        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+          The MVP routes each claimed opportunity into a four-agent team and a founder workflow library.
+          GTM, Sales, Marketing, and Engineering stay attached to this brief instead of drifting into generic advice.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <ClaimIdeaButton opportunity={opp} />
+          <Button asChild variant="outline">
+            <Link to={`/agents?idea=${encodeURIComponent(opp.slug)}`}>Open Agents</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to={`/workflows?idea=${encodeURIComponent(opp.slug)}`}>Open Workflows</Link>
+          </Button>
+        </div>
+      </section>
 
       <Separator className="my-10" />
 
