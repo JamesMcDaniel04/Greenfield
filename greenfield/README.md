@@ -29,28 +29,48 @@ Supabase dashboard → **SQL editor** → paste and run, in order:
 
 1. [`supabase/migrations/0001_initial.sql`](supabase/migrations/0001_initial.sql) — tables, RLS, auth trigger
 2. [`supabase/migrations/0002_admin_and_briefs.sql`](supabase/migrations/0002_admin_and_briefs.sql) — admin role + write policies
+3. [`supabase/migrations/0003_yc_rfs_tag.sql`](supabase/migrations/0003_yc_rfs_tag.sql) — YC RFS tag column on opportunities
+4. [`supabase/migrations/0004_opportunity_signals.sql`](supabase/migrations/0004_opportunity_signals.sql) — research signals table (n8n ingestion target)
+5. [`supabase/migrations/0005_teams_and_plans.sql`](supabase/migrations/0005_teams_and_plans.sql) — plan tiers + teams + personal-team auto-create trigger
+6. [`supabase/migrations/0006_idea_claims.sql`](supabase/migrations/0006_idea_claims.sql) — exclusive idea claims + `visible_opportunities` view
+7. [`supabase/migrations/0007_agent_runs.sql`](supabase/migrations/0007_agent_runs.sql) — agent run history (target of `run-agent` edge function)
 
 ### 4. Enable Google OAuth (optional)
 
 Supabase dashboard → **Authentication → Providers → Google** → toggle on, paste your OAuth client ID/secret. Add redirect URL `https://YOUR-PROJECT.supabase.co/auth/v1/callback`.
 
-### 5. Deploy the edge function (for on-demand brief generation)
+### 5. Deploy the edge functions
 
 Install the Supabase CLI (`brew install supabase/tap/supabase`), then from this directory:
 
 ```bash
 supabase login
 supabase link --project-ref YOUR-PROJECT-REF
+
+# Required for all agent + brief features
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
+# Required for the n8n ingestion endpoint
+supabase secrets set INGEST_SIGNAL_TOKEN=$(openssl rand -hex 32)
+# Optional — enables the web_search tool used by agents
+supabase secrets set BRAVE_API_KEY=...     # or SERPAPI_API_KEY
+
+# Deploy each function
 supabase functions deploy generate-brief
+supabase functions deploy ingest-signal --no-verify-jwt
+supabase functions deploy claim-idea
+supabase functions deploy release-claim
+supabase functions deploy run-agent
 ```
 
-This powers two things:
+Functions overview:
 
-- The "Generate brief" button on the admin list (for new opportunities you create manually).
-- The Pro detail page fallback when a brief isn't cached yet.
-
-Generated briefs are stored in `build_briefs` so the next request is free.
+| Function | What it does | Used by |
+| --- | --- | --- |
+| `generate-brief`  | Pro-or-admin gated; calls Claude → caches a Markdown build brief per opportunity | "Generate brief" button (admin + Pro detail page) |
+| `ingest-signal`   | Token-authed; appends a research signal row | n8n workflows (see `n8n-workflows/`) |
+| `claim-idea`      | JWT-authed; atomically claims an opportunity (quota + exclusivity enforced) | `ClaimIdeaButton` |
+| `release-claim`   | JWT-authed; releases an active claim | `ClaimIdeaButton` |
+| `run-agent`       | JWT-authed; runs an Anthropic tool-use loop for a claim's GTM / Sales / Marketing / Engineering agent | `AgentRunDialog` on `/agents` |
 
 ### 6. Generate seed content
 
@@ -77,9 +97,47 @@ npm run test:ui    # Playwright interactive UI
 
 ---
 
+## Pricing tiers (in-product)
+
+| Tier | Price | Claims | Seats | Agent runs |
+| --- | --- | --- | --- | --- |
+| **Scout**           | $97/year     | — | 1 | — |
+| **Entrepreneur**    | $197/year    | 1 active at a time (year-long; release to claim again) | 1 | unlimited on the claimed idea |
+| **Venture Studio**  | $12,000/year | 10/week shared across the team | up to 5 | unlimited on every team claim |
+| **University & Accelerator** | Custom | 50/week (default) | 25 (default) | unlimited |
+
+`src/lib/pricing.ts` is the single source of truth — the SQL `plan_defaults()` helper mirrors the same numbers so DB enforcement and marketing copy stay in sync.
+
+---
+
 ## Promoting users
 
-### To Pro (manual, pre-Stripe)
+### To Entrepreneur or Venture Studio (manual, pre-Stripe)
+
+```sql
+-- Set the user's plan + sync their personal team's quota
+update profiles
+set plan = 'entrepreneur', is_pro = true, pro_since = now()
+where user_id = (select id from auth.users where email = 'you@example.com');
+
+select sync_team_plan_defaults(personal_team_id)
+from profiles
+where user_id = (select id from auth.users where email = 'you@example.com');
+```
+
+For Venture Studio, set `plan = 'venture_studio'` instead and add additional members via:
+
+```sql
+insert into team_members (team_id, user_id, role)
+select
+  (select personal_team_id from profiles where user_id = (select id from auth.users where email = 'studio-owner@example.com')),
+  id,
+  'member'
+from auth.users
+where email in ('teammate1@example.com', 'teammate2@example.com');
+```
+
+### To Pro (legacy flag — kept for build-brief gating)
 
 ```sql
 update profiles

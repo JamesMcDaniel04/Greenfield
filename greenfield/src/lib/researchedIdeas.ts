@@ -60,9 +60,15 @@ type IdeaSeed = {
   moat?: Opportunity["moat"];
   distribution_play?: Opportunity["distribution_play"];
   demand_trend?: Opportunity["demand_trend"];
+  founder_path?: Opportunity["founder_path"];
+  difficulty?: Opportunity["difficulty"];
+  starting_capital?: Opportunity["starting_capital"];
+  time_to_launch?: Opportunity["time_to_launch"];
+  build_stack_hint?: Opportunity["build_stack_hint"];
 };
 
 type SeedTuple = [ResearchStage, string, string, string, Opportunity["model_type"]?];
+type SeedInput = SeedTuple | Omit<IdeaSeed, "theme">;
 
 const BASE_DATE = new Date("2026-05-24T00:00:00Z").toISOString();
 const BASE_RANK = 36;
@@ -172,6 +178,8 @@ const THEMES: Record<ThemeKey, ThemeDefinition> = {
       src("blog", 18, "https://www.tonic.ai/blog/agentification-of-test-data-management-meet-structural-agent", "Tonic introduces an agent for structural test-data configuration", "The incumbent category is still investing in workflow automation around synthetic and masked data."),
       src("arxiv", 44, "https://arxiv.org/abs/2504.01908", "Benchmarking Synthetic Tabular Data: A Multi-Dimensional Evaluation Framework", "Recent paper on how to evaluate synthetic data quality beyond one metric."),
       src("github", 60, "https://github.com/sdv-dev/SDV", "Synthetic Data Vault on GitHub", "Active open-source baseline that many teams already use as a starting point."),
+      src("reddit", 620, "https://www.reddit.com/r/devops/comments/16fqpsm/data_masking_in_staging/", "r/devops discussion on data masking in staging", "Engineers are still debating how to avoid copying production data into staging while preserving realistic test cases."),
+      src("hackernews", 610, "https://news.ycombinator.com/item?id=41569240", "Show HN: Open-Source Data Anonymization for Developers", "The HN thread surfaces recurring frustration around realistic non-production datasets and schema changes that break masking rules."),
     ],
   },
   complianceReadiness: {
@@ -254,6 +262,8 @@ const THEMES: Record<ThemeKey, ThemeDefinition> = {
       src("blog", 160, "https://www.anthropic.com/research/model-context-protocol", "Anthropic introduces the Model Context Protocol", "Portable tool schemas make shared agent infrastructure substantially more realistic."),
       src("blog", 30, "https://devblogs.microsoft.com/agent-framework/semantic-kernel-multi-agent-orchestration/", "Microsoft on Semantic Kernel multi-agent orchestration", "Large platform vendors are standardizing multi-agent workflow patterns."),
       src("blog", 10, "https://opensource.microsoft.com/blog/2026/05/14/conductor-deterministic-orchestration-for-multi-agent-ai-workflows/", "Conductor for deterministic multi-agent orchestration", "Recent tooling focused on safety limits, workflow control, and cross-model orchestration."),
+      src("reddit", 27, "https://www.reddit.com/r/LLMDevs/comments/1sxonw2/how_many_of_you_are_actually_running_multiagent/", "r/LLMDevs discussion on multi-agent systems in production", "Builders describe debugging handoffs and tracing failures as the main reason many teams retreat to a single agent with tools."),
+      src("reddit", 29, "https://www.reddit.com/r/AI_Agents/comments/1swbew1/how_are_teams_handling_permissions_for_ai_agents/", "r/AI_Agents discussion on agent permissions and audit logs", "Operators are explicitly talking about blast radius, tool scopes, and approval gates for internal agents."),
     ],
   },
   priorAuth: {
@@ -459,7 +469,7 @@ const THEMES: Record<ThemeKey, ThemeDefinition> = {
   },
 };
 
-const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
+const IDEAS_BY_THEME: Record<ThemeKey, SeedInput[]> = {
   accounting: [
     ["smallTeam", "Client onboarding OS for solo bookkeepers", "Bookkeeping onboarding", "A client-intake workspace for one- and two-person bookkeeping firms that still chase statements, portal access, and kickoff tasks across email and spreadsheets."],
     ["solo", "Tax organizer reminder autopilot for independent preparers", "Tax intake automation", "A reminder and status engine for independent tax preparers that automatically escalates missing documents before returns fall behind schedule."],
@@ -472,6 +482,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["solo", "Bookkeeping cleanup scoping tool for messy client files", "Cleanup estimation", "A scoping tool that helps bookkeepers quote cleanup work based on file complexity, missing months, and likely reconciliation pain."],
     ["domainExpert", "Tax notice response tracker for local accounting firms", "Tax notice handling", "A tracker for local firms juggling IRS and state notices, client document requests, response drafts, and deadlines."],
     ["smallTeam", "Client KPI pack builder for fractional CFO teams", "Reporting packs", "A reporting-pack builder for fractional CFO teams that need to turn raw books into consistent monthly KPI decks for multiple clients."],
+    {
+      stage: "smallTeam",
+      title: "Reconciliation exception inbox for outsourced bookkeeping teams",
+      niche: "Reconciliation ops",
+      summary: "A reconciliation exception inbox that routes unmatched transactions, stale rules, and missing-support requests across outsourced bookkeeping teams before month-end turns chaotic.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "solo",
+      title: "Client document chase portal for tax and bookkeeping firms",
+      niche: "Document chasing",
+      summary: "A simple client portal that keeps recurring document requests, reminders, and upload status out of email threads for independent tax and bookkeeping firms.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "smallTeam",
+      title: "Payroll-close blocker tracker for multi-client accounting shops",
+      niche: "Payroll close ops",
+      summary: "A blocker tracker for accounting shops that run payroll close across many clients and keep getting stuck on missing approvals, timecard edits, and last-minute corrections.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Sales-tax notice triage board for local accounting firms",
+      niche: "Sales-tax notices",
+      summary: "A triage board for local accounting firms handling state sales-tax notices, deadline tracking, and client follow-ups that otherwise disappear inside inboxes.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "solo",
+      title: "Entity setup packet builder for solo CPA firms",
+      niche: "Entity setup packets",
+      summary: "A packet builder that helps solo CPA firms turn entity-setup requests into repeatable checklists, document requests, and client handoff packets.",
+      model_type: "Productized Service",
+    },
   ],
   industrialMro: [
     ["smallTeam", "Obsolescence alert feed for PLC-heavy plants", "Lifecycle intelligence", "A watchlist that flags end-of-life notices, secondary-market inventory changes, and replacement-risk signals for plants running aging PLC and HMI fleets."],
@@ -488,6 +533,44 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "Schema drift detector for synthetic data pipelines", "Data pipeline QA", "A monitor that flags when schema or distribution drift makes previously generated synthetic datasets misleading or unusable for testing."],
     ["smallTeam", "Synthetic-data fidelity evaluation harness", "Quality benchmarking", "A benchmarking harness that compares synthetic-data outputs for fidelity, privacy, and edge-case coverage before teams trust them in test pipelines."],
     ["venture", "Vertical synthetic data warehouse for regulated AI teams", "Regulated AI infrastructure", "A managed warehouse of reusable synthetic datasets and generators tuned for healthcare, insurance, and financial AI product teams."],
+    {
+      stage: "smallTeam",
+      title: "Masked Postgres refresh API for staging environments",
+      niche: "Masked staging refresh",
+      summary: "An API that refreshes staging databases with masked relational data so teams stop choosing between realistic testing and copying production records around.",
+      model_type: "API / Usage-Based",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Synthetic FHIR edge-case library for health-tech QA teams",
+      niche: "FHIR edge cases",
+      summary: "A library of synthetic FHIR edge cases for health-tech QA teams that need realistic coverage for referrals, claims, prior auth, and messy patient timelines.",
+      model_type: "API / Usage-Based",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Test-data approval workflow for privacy teams",
+      niche: "Privacy approvals",
+      summary: "A workflow that gives privacy and security teams a review queue for test-data requests instead of making them police ad hoc database copies after the fact.",
+      build_stack_hint: "Hybrid",
+    },
+    {
+      stage: "smallTeam",
+      title: "Demo dataset generator for B2B SaaS sales engineers",
+      niche: "Demo data generation",
+      summary: "A generator that creates believable demo datasets and edge-case scenarios for sales engineers who keep hand-editing brittle fake accounts before every demo.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "venture",
+      title: "Tenant-isolated sandbox data broker for multi-tenant SaaS",
+      niche: "Tenant sandboxing",
+      summary: "A broker that provisions tenant-isolated sandbox datasets for multi-tenant SaaS products where staging realism, customer privacy, and support access are in constant conflict.",
+      model_type: "API / Usage-Based",
+      build_stack_hint: "Traditional engineering",
+    },
   ],
   complianceReadiness: [
     ["solo", "Security questionnaire answer base for early-stage SaaS teams", "Questionnaire workflows", "A structured answer bank that turns repeated enterprise security questionnaires into a reusable, reviewable knowledge base for lean startup teams."],
@@ -501,6 +584,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "AI vendor-risk response pack for procurement-heavy sales", "Vendor risk packets", "A response pack builder for startups that need to answer AI governance and vendor-risk questions before procurement will move forward."],
     ["domainExpert", "Access-review evidence workspace for lean IT teams", "Access reviews", "A workspace that helps lean IT and security teams collect, approve, and archive quarterly access review evidence without spreadsheet sprawl."],
     ["solo", "Pen-test remediation coordinator for first enterprise audits", "Remediation follow-up", "A remediation tracker that turns a first penetration test into owned fixes, proof links, and customer-facing closeout updates."],
+    {
+      stage: "solo",
+      title: "Customer pen-test request intake desk for AI startups",
+      niche: "Pen-test intake",
+      summary: "A lightweight intake desk for AI startups that keep getting customer pen-test requests and security follow-ups with no clean place to track status or scope.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "smallTeam",
+      title: "Subprocessor disclosure updater for fast-shipping SaaS teams",
+      niche: "Subprocessor updates",
+      summary: "A workflow that keeps subprocessor pages, customer notices, and internal approvals aligned for SaaS teams that change vendors faster than their trust docs update.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Security questionnaire evidence linker for revops teams",
+      niche: "Evidence linking",
+      summary: "A linker that attaches the right screenshots, policy sections, and proof exports to repeated security questionnaire answers so revops teams stop rebuilding the same packet each time.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Policy version history vault for enterprise-selling startups",
+      niche: "Policy versioning",
+      summary: "A vault that preserves policy history, approval trails, and customer-facing change records for startups whose security docs keep changing during sales cycles.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "domainExpert",
+      title: "Access request attestation workflow for lean IT teams",
+      niche: "Access attestations",
+      summary: "An attestation workflow for lean IT teams that need managers to review, confirm, and archive access decisions without quarterly spreadsheet fire drills.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   oncology: [
     ["smallTeam", "Pathology slide logistics coordinator for remote second opinions", "Slide logistics", "A coordination layer that handles consent, slide shipment, image requests, and receipt tracking for cancer patients seeking remote second opinions."],
@@ -533,6 +651,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "Fallback router for mixed-vendor internal agents", "Reliability routing", "A routing layer that decides when internal agents should retry, escalate, or fail over to a different model or workflow."],
     ["venture", "Shared policy engine for agent fleets", "Policy orchestration", "A central policy engine that enforces approved tools, escalation rules, and data boundaries across an enterprise’s agent fleet."],
     ["domainExpert", "Agent incident review workspace for compliance teams", "Incident review", "A workspace for compliance and ops teams to review agent incidents, attach evidence, and document corrective actions."],
+    {
+      stage: "smallTeam",
+      title: "Scoped tool registry for internal agent teams",
+      niche: "Tool registries",
+      summary: "A registry that defines which tools each internal agent can call so platform teams stop hard-coding permission logic into every workflow separately.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Agent permission receipts for compliance-sensitive workflows",
+      niche: "Permission receipts",
+      summary: "A receipt layer that records what an internal agent was allowed to do at the moment it touched finance, HR, or customer data.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Human-approval checkpoint engine for tool-calling agents",
+      niche: "Human checkpoints",
+      summary: "An approval engine that inserts durable human checkpoints before tool-calling agents trigger expensive, risky, or customer-facing actions.",
+      build_stack_hint: "Hybrid",
+    },
+    {
+      stage: "smallTeam",
+      title: "Cross-agent cost and token ledger for internal AI teams",
+      niche: "Agent finops",
+      summary: "A shared ledger that attributes token spend, retries, and tool costs across internal agents so teams can see which workflows are quietly getting expensive.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "venture",
+      title: "Enterprise agent handoff replay console",
+      niche: "Handoff replay",
+      summary: "A replay console that reconstructs multi-agent handoffs and tool decisions so platform teams can debug failures after the fact instead of reading raw logs.",
+      build_stack_hint: "Traditional engineering",
+    },
   ],
   priorAuth: [
     ["smallTeam", "Specialty-clinic denial-reason normalizer", "Denial analytics", "A normalization layer that converts inconsistent payer denial language into a shared taxonomy specialty clinics can actually route and act on."],
@@ -546,6 +699,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["domainExpert", "Clinical-document request chaser for specialty referrals", "Document chasing", "A workflow assistant that chases chart notes, imaging, and lab records needed to support specialty prior-auth submissions."],
     ["smallTeam", "Peer-to-peer review prep packet for specialty practices", "Peer review prep", "A prep packet builder that assembles payer criteria, clinical history, and prior denials before physicians jump on peer-to-peer calls."],
     ["domainExpert", "Imaging order medical-necessity checker", "Imaging QA", "A preflight checker that flags missing diagnosis support and payer-specific criteria before advanced imaging orders get denied."],
+    {
+      stage: "smallTeam",
+      title: "Prior-auth callback scheduler for specialty clinics",
+      niche: "Callback scheduling",
+      summary: "A callback scheduler for specialty clinics that keeps payer follow-ups, hold-time retries, and escalation windows from getting lost between staff members.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Denial-letter parser for imaging centers",
+      niche: "Denial parsing",
+      summary: "A parser that normalizes payer denial letters for imaging centers so staff can route follow-up work without reading every insurer format from scratch.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "solo",
+      title: "Appeal template base for high-volume therapy practices",
+      niche: "Appeal templates",
+      summary: "A template base for therapy practices that submit the same appeal arguments repeatedly and still rebuild packets from old PDFs and shared drives.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "smallTeam",
+      title: "Referral packet completeness check for cardiology groups",
+      niche: "Referral completeness",
+      summary: "A completeness checker that flags missing referral records, clinical notes, and plan details before cardiology staff start an authorization submission.",
+      build_stack_hint: "Hybrid",
+    },
+    {
+      stage: "domainExpert",
+      title: "Authorization aging dashboard for infusion pharmacies",
+      niche: "Authorization aging",
+      summary: "An aging dashboard for infusion pharmacies that need to spot expiring approvals and stalled submissions before treatment schedules or revenue break.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   accessibility: [
     ["solo", "EU accessibility evidence packs for Shopify merchants", "Merchant accessibility packs", "A fixed-scope evidence and remediation pack for merchants selling into Europe who need a credible accessibility story without a full internal team."],
@@ -609,6 +797,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["domainExpert", "Critical Tracking Event exception inbox", "Exception handling", "An inbox built around CTE/KDE exceptions so teams can resolve missing fields and bad partner data before an audit or recall exposes it."],
     ["smallTeam", "Buyer traceability questionnaire response base", "Buyer questionnaires", "A response base for brands and distributors answering the same traceability and recall-readiness questionnaires from retail buyers."],
     ["solo", "Retailer traceability readiness prep for emerging brands", "Retail readiness", "A prep service for emerging food brands that need to clean up records and partner data before a major retailer asks for traceability proof."],
+    {
+      stage: "smallTeam",
+      title: "Lot-photo capture app for warehouse receivers",
+      niche: "Receiving capture",
+      summary: "A capture app that lets warehouse receivers snap lot labels and reconcile them to inbound records before someone has to decode bad handwriting during a recall.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Supplier KDE missing-field notifier",
+      niche: "Missing KDE alerts",
+      summary: "A notifier that tells suppliers exactly which KDE fields or lot references are missing before their records break a downstream traceability request.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "solo",
+      title: "Recall drill evidence pack for regional food brands",
+      niche: "Recall drill packs",
+      summary: "An evidence pack service for regional food brands that want one repeatable way to run recall drills and show buyers what was actually tested.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "solo",
+      title: "Receiving log cleanup desk for specialty importers",
+      niche: "Receiving cleanup",
+      summary: "A cleanup desk for specialty importers whose receiving logs, lot links, and supplier contact sheets are too messy to trust during a traceability event.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "domainExpert",
+      title: "Retail buyer traceability timeline tracker",
+      niche: "Buyer timeline tracking",
+      summary: "A tracker for brands and distributors that need to answer retailer traceability deadlines, action items, and document requests without losing the chain of accountability.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   droneCompliance: [
     ["solo", "Part 107 waiver packet service for inspection firms", "Waiver preparation", "A waiver packet service for drone inspection firms that need repeatable documentation for operations outside basic Part 107 limits."],
@@ -622,6 +845,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "Mission risk packet builder for roof and solar inspection crews", "Mission prep", "A packet builder that assembles airspace notes, site hazards, client contacts, and mission mitigations before commercial inspection flights."],
     ["solo", "Controlled-airspace request concierge for real-estate media shops", "Airspace authorizations", "A concierge service for small media operators who keep hitting controlled-airspace friction when trying to book paid shoots."],
     ["domainExpert", "Drone subcontractor credential wallet for utilities", "Subcontractor credentials", "A credential wallet that utility drone primes can use to verify insurance, pilot certs, and aircraft records across subcontractors."],
+    {
+      stage: "solo",
+      title: "LAANC mission logbook for local inspection operators",
+      niche: "LAANC logs",
+      summary: "A mission logbook that ties LAANC approvals, site notes, and actual flight execution together for local inspection operators who need cleaner compliance records later.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "solo",
+      title: "Drone insurance renewal wallet for subcontractors",
+      niche: "Insurance renewals",
+      summary: "A renewal wallet for subcontractor drone operators who keep resending the same insurance proofs and policy updates to primes and utilities.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "smallTeam",
+      title: "Flight-permission packet builder for utility contractors",
+      niche: "Permission packets",
+      summary: "A packet builder for utility drone contractors that assembles site contacts, airspace notes, client approvals, and hazard summaries before field missions.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "FAA record locker for multi-pilot drone shops",
+      niche: "FAA recordkeeping",
+      summary: "A record locker for multi-pilot drone shops that need one place for aircraft details, pilot certificates, waivers, incidents, and maintenance proof.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "domainExpert",
+      title: "Recurrent training tracker for inspection fleets",
+      niche: "Recurrent training",
+      summary: "A tracker for inspection fleets that need to document recurrent training, SOP changes, and pilot sign-offs before customers or primes ask for proof.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   gridInterconnection: [
     ["domainExpert", "Data-center interconnection document room", "Interconnection documentation", "A controlled document room for developers managing utility studies, queue paperwork, land, and power-delivery negotiations."],
@@ -643,6 +901,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["domainExpert", "Lumper and accessorial recovery tracker for produce fleets", "Accessorial recovery", "A tracker that keeps lumper, detention, and other accessorial disputes from disappearing after the load is delivered."],
     ["smallTeam", "Appointment-change audit trail for drayage carriers", "Appointment disputes", "An audit trail for drayage carriers dealing with shifting appointments, gate holds, and finger-pointing over who caused delay."],
     ["solo", "Broker scorecard built from payouts and disputes", "Broker scorecards", "A scorecard system that lets small carriers rank brokers by payout behavior, dispute frequency, and accessorial friction."],
+    {
+      stage: "smallTeam",
+      title: "Carrier packet autofill for repeat broker onboarding",
+      niche: "Onboarding autofill",
+      summary: "An autofill workflow that keeps small carriers from re-entering the same insurance, authority, and payment details every time a broker asks for onboarding again.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "solo",
+      title: "Detention proof app for solo owner-operators",
+      niche: "Detention proof",
+      summary: "A simple proof app for solo owner-operators that timestamps arrival, delay, and release events so detention claims survive past the delivery.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "solo",
+      title: "Signed POD and lumper chase desk for produce fleets",
+      niche: "POD and lumper chasing",
+      summary: "A chase desk for produce fleets that are constantly missing signed PODs, lumper receipts, and backup needed to invoice cleanly.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "smallTeam",
+      title: "Broker contract exception classifier for small carriers",
+      niche: "Contract exception review",
+      summary: "A classifier that spots unusual broker contract clauses, payment exceptions, and dispute triggers before a small carrier signs away margin.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "domainExpert",
+      title: "Spot-quote margin audit board for tiny fleets",
+      niche: "Margin audit boards",
+      summary: "An audit board that shows where spot-quote assumptions, accessorial misses, and delayed paperwork are eroding margin for tiny fleets load by load.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   constructionSafety: [
     ["solo", "OSHA inspection document vault setup for specialty subcontractors", "Inspection readiness", "A document vault and operating checklist for specialty subcontractors that need their inspection materials organized before OSHA arrives."],
@@ -656,6 +949,41 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "Corrective-action tracker after near-miss reports", "Corrective actions", "A tracker that assigns, follows up, and closes corrective actions so near-miss reports do more than create paperwork."],
     ["domainExpert", "Equipment inspection log for rental-heavy crews", "Equipment inspections", "An inspection log built for crews that rotate rented lifts, loaders, and other gear across jobs without consistent records."],
     ["solo", "Subcontractor JHA review desk for specialty trades", "JHA review", "A review desk for specialty trade contractors who need cleaner job hazard analyses before stepping onto larger GC sites."],
+    {
+      stage: "solo",
+      title: "Tailgate safety note transcriber for field foremen",
+      niche: "Tailgate notes",
+      summary: "A transcriber that turns rough tailgate and toolbox notes into searchable records so field foremen are not rewriting paper scribbles after the shift.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Subcontractor orientation proof wallet for small GCs",
+      niche: "Orientation proof",
+      summary: "A proof wallet for small GCs that need orientation sign-offs, site rules, and worker acknowledgements available before subs walk onto the jobsite.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Lift inspection reminder board for concrete crews",
+      niche: "Lift inspections",
+      summary: "A reminder board for concrete crews rotating lifts between jobsites and struggling to keep inspection proof attached to the right machine and date.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "solo",
+      title: "Near-miss follow-up pack for safety coordinators",
+      niche: "Near-miss follow-up",
+      summary: "A follow-up pack that helps safety coordinators turn a near miss into assigned actions, closeout proof, and a reusable lesson for the next site meeting.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "domainExpert",
+      title: "Foreman corrective-action closeout tracker",
+      niche: "Corrective-action closeout",
+      summary: "A closeout tracker for foremen and safety leads who need to prove that corrective actions were assigned, completed, and communicated back to the field.",
+      build_stack_hint: "Hybrid",
+    },
   ],
   shiftWork: [
     ["venture", "Multi-app schedule control for hourly workers", "Worker scheduling", "A worker-side scheduling app that unifies shifts, swaps, and availability across the multiple employer apps hourly workers already juggle."],
@@ -669,6 +997,42 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedTuple[]> = {
     ["smallTeam", "Shift-swap approval log for franchise operators", "Swap approvals", "A log that records who requested, approved, and worked each swap so operators can defend the final schedule later."],
     ["domainExpert", "Predictable-scheduling audit pack for regional operators", "Audit prep", "An audit pack that assembles notice periods, premium-pay events, and consent records for operators facing labor scrutiny."],
     ["smallTeam", "Cross-location hours marketplace for hourly chains", "Hours marketplace", "A marketplace that lets workers pick up compliant open shifts across nearby locations while preserving access-to-hours proof for the operator."],
+    {
+      stage: "smallTeam",
+      title: "Call-out replacement board for independent restaurants",
+      niche: "Call-out replacements",
+      summary: "A replacement board that helps independent restaurants fill same-day call-outs without losing the record of who was offered the shift and who accepted it.",
+      build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    },
+    {
+      stage: "smallTeam",
+      title: "Hourly-worker availability wallet across two jobs",
+      niche: "Worker availability",
+      summary: "An availability wallet for hourly workers juggling two jobs who need one reliable place to keep shift commitments from colliding.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "smallTeam",
+      title: "Break-rule risk checker for cafe operators",
+      niche: "Break-rule checks",
+      summary: "A risk checker that flags break-rule and late-change problems before a cafe manager publishes a schedule that creates premium-pay exposure.",
+      build_stack_hint: "Traditional engineering",
+    },
+    {
+      stage: "solo",
+      title: "Schedule change premium-pay explainer for workers",
+      niche: "Premium-pay explainers",
+      summary: "A worker-facing explainer that shows when a schedule change should trigger premium pay and helps hourly staff keep their own proof.",
+      model_type: "Productized Service",
+    },
+    {
+      stage: "venture",
+      title: "Store-to-store shift marketplace for franchise groups",
+      niche: "Franchise shift marketplace",
+      summary: "A marketplace that lets franchise groups move workers between stores while preserving compliance, approval trails, and worker eligibility rules.",
+      model_type: "Marketplace",
+      build_stack_hint: "Traditional engineering",
+    },
   ],
 };
 
@@ -719,21 +1083,39 @@ function oneLiner(summary: string) {
   return summary.endsWith(".") ? summary : `${summary}.`;
 }
 
-const RESEARCH_IDEAS: IdeaSeed[] = Object.entries(IDEAS_BY_THEME).flatMap(([theme, tuples]) =>
-  tuples.map(([stage, title, niche, summary, model_type]) => ({
-    theme: theme as ThemeKey,
-    stage,
-    title,
-    niche,
-    summary,
-    model_type,
-  })),
+const RESEARCH_IDEAS: IdeaSeed[] = Object.entries(IDEAS_BY_THEME).flatMap(([theme, inputs]) =>
+  inputs.map((input) =>
+    Array.isArray(input)
+      ? {
+          theme: theme as ThemeKey,
+          stage: input[0],
+          title: input[1],
+          niche: input[2],
+          summary: input[3],
+          model_type: input[4],
+        }
+      : {
+          theme: theme as ThemeKey,
+          ...input,
+        },
+  ),
 );
 
 export const RESEARCH_OPPORTUNITIES: Opportunity[] = RESEARCH_IDEAS.map((idea, index) => {
   const theme = THEMES[idea.theme];
   const stage = STAGE_DEFAULTS[idea.stage];
   const model_type = idea.model_type ?? theme.model_type ?? stage.model_type;
+  const founder_path = idea.founder_path ?? stage.founder_path;
+  const difficulty = idea.difficulty ?? stage.difficulty;
+  const starting_capital = idea.starting_capital ?? stage.starting_capital;
+  const time_to_launch = idea.time_to_launch ?? stage.time_to_launch;
+  const build_stack_hint =
+    idea.build_stack_hint ??
+    (model_type === "Productized Service"
+      ? "No-code"
+      : model_type === "API / Usage-Based"
+        ? "Traditional engineering"
+        : stage.build_stack_hint);
 
   return {
     id: slugify(idea.title),
@@ -750,15 +1132,11 @@ export const RESEARCH_OPPORTUNITIES: Opportunity[] = RESEARCH_IDEAS.map((idea, i
     industry: theme.industry,
     niche: idea.niche,
     revenue_ceiling: idea.revenue_ceiling ?? theme.revenue_ceiling ?? stage.revenue_ceiling,
-    founder_path: stage.founder_path,
-    difficulty: stage.difficulty,
-    starting_capital: stage.starting_capital,
-    time_to_launch: stage.time_to_launch,
-    build_stack_hint: model_type === "Productized Service"
-      ? "No-code"
-      : model_type === "API / Usage-Based"
-        ? "Traditional engineering"
-        : stage.build_stack_hint,
+    founder_path,
+    difficulty,
+    starting_capital,
+    time_to_launch,
+    build_stack_hint,
     moat: idea.moat ?? theme.moat,
     distribution_play: idea.distribution_play ?? theme.distribution_play,
     demand_trend: idea.demand_trend ?? theme.demand_trend,
