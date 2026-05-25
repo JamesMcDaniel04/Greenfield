@@ -7,8 +7,14 @@ import OpportunityRow from "@/components/opportunities/OpportunityRow";
 import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import { TIERS } from "@/lib/pricing";
 
+const PREVIEW_COUNT = 10;
+
 export default function LandingPage() {
-  const featured = SAMPLE_OPPORTUNITIES.filter((o) => o.featured).slice(0, 4);
+  const featured = [...SAMPLE_OPPORTUNITIES]
+    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.rank - b.rank)
+    .slice(0, PREVIEW_COUNT);
+  const totalCount = SAMPLE_OPPORTUNITIES.length;
+  const lockedCount = totalCount - PREVIEW_COUNT;
 
   return (
     <>
@@ -27,8 +33,8 @@ export default function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
-              <Link to="/browse">
-                Browse the catalogue
+              <Link to="/auth?mode=signup">
+                Get instant access
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -36,6 +42,9 @@ export default function LandingPage() {
               <a href="#how-it-works">How it works</a>
             </Button>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            From $99/year. Preview {PREVIEW_COUNT} opportunities below — sign up to unlock the rest.
+          </p>
         </div>
       </section>
 
@@ -55,28 +64,49 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Featured opportunities */}
+      {/* Preview opportunities */}
       <section className="border-b border-border/60">
         <div className="container-wide py-16">
           <div className="flex items-baseline justify-between gap-4">
             <div>
               <p className="text-xs font-medium uppercase tracking-wider text-primary">Featured this week</p>
-              <h2 className="mt-1 font-display text-2xl md:text-3xl">A taste of the catalogue.</h2>
+              <h2 className="mt-1 font-display text-2xl md:text-3xl">{PREVIEW_COUNT} of {totalCount}.</h2>
             </div>
-            <Button variant="ghost" asChild className="hidden sm:inline-flex">
-              <Link to="/browse">
-                View all {SAMPLE_OPPORTUNITIES.length}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
           </div>
+
           <div className="mt-8 space-y-3">
             {featured.map((opp) => <OpportunityRow key={opp.id} opp={opp} />)}
           </div>
-          <div className="mt-6 text-center sm:hidden">
-            <Button variant="outline" asChild>
-              <Link to="/browse">View all {SAMPLE_OPPORTUNITIES.length} →</Link>
-            </Button>
+
+          {/* Locked teaser — replaces the old "Browse all" CTA */}
+          <div className="relative mt-3 overflow-hidden rounded-xl border border-dashed bg-gradient-to-b from-card to-muted/30">
+            {/* Faded ghost rows to imply more below the fold */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 space-y-3 p-4 opacity-30 blur-[1px]">
+              <div className="h-20 rounded-lg border bg-card" />
+              <div className="h-20 rounded-lg border bg-card" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/80 to-background" />
+            <div className="relative px-6 py-16 text-center">
+              <Lock className="mx-auto h-6 w-6 text-primary" />
+              <h3 className="mt-3 font-display text-xl">
+                {lockedCount} more opportunities behind sign-up.
+              </h3>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                Full briefs, filters, saved lists, and downloadable Markdown specs.
+                Starter is $99/year — cancel anytime.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Button asChild>
+                  <Link to="/auth?mode=signup">
+                    Create account
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <a href="#pricing">See pricing</a>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -222,11 +252,11 @@ export default function LandingPage() {
           <Rocket className="mx-auto h-8 w-8 text-primary" />
           <h2 className="mt-4 font-display text-3xl md:text-4xl">Stop scrolling Twitter for ideas.</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Open the catalogue, pick one, and have a working scaffold by tomorrow.
+            Create an account, pick one, and have a working scaffold by tomorrow.
           </p>
           <Button size="lg" asChild className="mt-6">
-            <Link to="/browse">
-              Browse {SAMPLE_OPPORTUNITIES.length} opportunities
+            <Link to="/auth?mode=signup">
+              Get instant access
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>

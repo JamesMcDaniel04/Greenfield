@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Sparkline from "@/components/opportunities/Sparkline";
 import SaveButton from "@/components/opportunities/SaveButton";
 import BuildBriefPanel from "@/components/opportunities/BuildBriefPanel";
+import SourcesSection from "@/components/opportunities/SourcesSection";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import { YC_RFS_BATCH, ycRfsUrl } from "@/lib/yc-rfs";
@@ -134,6 +135,11 @@ export default function OpportunityDetailPage() {
           <Sparkline seed={opp.slug} trend={opp.demand_trend} width={720} height={180} showAxis className="block w-full h-auto" />
         </div>
       </section>
+
+      <Separator className="my-10" />
+
+      {/* Cited sources / signals from the n8n pipeline */}
+      <SourcesSection sources={opp.sources} />
 
       <Separator className="my-10" />
 

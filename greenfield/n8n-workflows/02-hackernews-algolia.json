@@ -1,0 +1,130 @@
+{
+  "name": "Greenfield · Hacker News (Algolia) → ingest-signal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hours", "hoursInterval": 6 }
+          ]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Every 6 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "q",
+              "name": "query",
+              "value": "ai agent OR llm infra OR saas challenger OR yc rfs",
+              "type": "string"
+            },
+            {
+              "id": "since",
+              "name": "since_ts",
+              "value": "={{ Math.floor((Date.now() - 7*24*60*60*1000) / 1000) }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-1",
+      "name": "Set query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://hn.algolia.com/api/v1/search_by_date",
+        "options": {
+          "queryParameters": {
+            "parameters": [
+              { "name": "query", "value": "={{ $json.query }}" },
+              { "name": "tags", "value": "story" },
+              { "name": "numericFilters", "value": "=created_at_i>{{ $json.since_ts }}" },
+              { "name": "hitsPerPage", "value": "50" }
+            ]
+          }
+        }
+      },
+      "id": "http-1",
+      "name": "Algolia HN search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "hits",
+        "options": {}
+      },
+      "id": "split-1",
+      "name": "Split hits",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "min-points",
+              "leftValue": "={{ $json.points ?? 0 }}",
+              "rightValue": "50",
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-1",
+      "name": "Min 50 points",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GREENFIELD_INGEST_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.GREENFIELD_INGEST_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source_type\": \"hackernews\",\n  \"url\": \"https://news.ycombinator.com/item?id={{ $json.objectID }}\",\n  \"title\": \"{{ $json.title }}\",\n  \"published_at\": \"{{ $json.created_at }}\",\n  \"snippet\": \"{{ $json.points }} points · {{ $json.num_comments }} comments · {{ $json.author }}\",\n  \"metadata\": { \"points\": {{ $json.points }}, \"num_comments\": {{ $json.num_comments }} }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } }
+        }
+      },
+      "id": "ingest-1",
+      "name": "POST to ingest-signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Every 6 hours":         { "main": [[ { "node": "Set query",         "type": "main", "index": 0 } ]] },
+    "Set query":             { "main": [[ { "node": "Algolia HN search","type": "main", "index": 0 } ]] },
+    "Algolia HN search":     { "main": [[ { "node": "Split hits",       "type": "main", "index": 0 } ]] },
+    "Split hits":            { "main": [[ { "node": "Min 50 points",    "type": "main", "index": 0 } ]] },
+    "Min 50 points":         { "main": [[ { "node": "POST to ingest-signal","type": "main", "index": 0 } ]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["greenfield"]
+}

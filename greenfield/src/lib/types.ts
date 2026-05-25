@@ -1,3 +1,34 @@
+/**
+ * A cited research signal — a public source (article, post, dataset entry) that
+ * informs the opportunity's gap / market / timing case. Populated by the n8n
+ * ingestion pipeline (TechCrunch RSS, Reddit, X, Hacker News, etc.) and
+ * surfaced on the detail page so readers can audit how fresh the signal is.
+ */
+export type SourceType =
+  | "techcrunch"
+  | "reddit"
+  | "x"
+  | "hackernews"
+  | "crunchbase"
+  | "arxiv"
+  | "github"
+  | "blog"
+  | "podcast"
+  | "other";
+
+export type SourceCitation = {
+  id?: string;
+  source_type: SourceType;
+  url: string;
+  title: string;
+  /** ISO timestamp of when the source itself was published. */
+  published_at: string;
+  /** ISO timestamp of when we ingested it. */
+  ingested_at?: string;
+  /** Short factual snippet — author, subreddit, channel, etc. NOT a quote of body content. */
+  snippet?: string;
+};
+
 export type Opportunity = {
   id: string;
   slug: string;
@@ -31,6 +62,9 @@ export type Opportunity = {
 
   /** Slug of a YC Request for Startups topic this opportunity is seeded by. */
   yc_rfs_slug: string | null;
+
+  /** Cited sources / signals that inform this opportunity. Newest first. */
+  sources: SourceCitation[];
 
   created_at: string;
   updated_at: string;

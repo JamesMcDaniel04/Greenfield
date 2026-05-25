@@ -1,4 +1,24 @@
-import type { Opportunity } from "@/lib/types";
+import type { Opportunity, SourceCitation } from "@/lib/types";
+
+// Helper to keep sample sources concise. Real sources come from the n8n pipeline.
+function src(
+  source_type: SourceCitation["source_type"],
+  daysAgo: number,
+  url: string,
+  title: string,
+  snippet?: string,
+): SourceCitation {
+  const d = new Date("2026-05-20T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return {
+    source_type,
+    url,
+    title,
+    snippet,
+    published_at: d.toISOString(),
+    ingested_at: new Date("2026-05-22T00:00:00Z").toISOString(),
+  };
+}
 
 /**
  * Demo-mode fixtures. These are shown when Supabase isn't configured
@@ -8,10 +28,11 @@ import type { Opportunity } from "@/lib/types";
  */
 
 function makeOpp(
-  o: Omit<Opportunity, "id" | "created_at" | "updated_at" | "cover_image_url" | "yc_rfs_slug"> & {
+  o: Omit<Opportunity, "id" | "created_at" | "updated_at" | "cover_image_url" | "yc_rfs_slug" | "sources"> & {
     id?: string;
     cover_image_url?: string | null;
     yc_rfs_slug?: string | null;
+    sources?: SourceCitation[];
   },
 ): Opportunity {
   const now = new Date("2026-04-01T00:00:00Z").toISOString();
@@ -19,6 +40,7 @@ function makeOpp(
     id: o.id ?? o.slug,
     cover_image_url: null,
     yc_rfs_slug: null,
+    sources: [],
     created_at: now,
     updated_at: now,
     ...o,
@@ -50,6 +72,20 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
     demand_trend: "Steady growth",
     featured: true,
     rank: 1,
+    sources: [
+      src("techcrunch", 8,  "https://techcrunch.com/2026/05/12/karbon-acquires-tax-planning-tool/",
+          "Karbon acquires tax-planning startup as solo-CPA tooling consolidates",
+          "Consolidation in the accounting-practice-management space"),
+      src("reddit",     14, "https://www.reddit.com/r/Bookkeeping/comments/abc123/",
+          "r/Bookkeeping — \"What does everyone use to manage client onboarding?\"",
+          "247 upvotes, 89 comments"),
+      src("hackernews", 21, "https://news.ycombinator.com/item?id=39000001",
+          "Show HN: I built a Zapier-style tool for accountants",
+          "112 points, 47 comments"),
+      src("crunchbase", 60, "https://www.crunchbase.com/funding-round/karbon-series-b",
+          "Karbon raises $25M Series B for accountant workflow software",
+          "Disclosed $25M round; AION Partners led"),
+    ],
   }),
 
   makeOpp({
@@ -76,6 +112,16 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
     demand_trend: "Niche but durable",
     featured: true,
     rank: 2,
+    sources: [
+      src("techcrunch", 32, "https://techcrunch.com/2026/04/18/factory-downtime-2026/",
+          "US manufacturers reported record downtime in Q1 2026 — supply-chain analysts blame obsolete parts"),
+      src("reddit",     19, "https://www.reddit.com/r/manufacturing/comments/def456/",
+          "r/manufacturing — \"Where do you source obsolete Allen-Bradley parts?\"",
+          "412 upvotes; comments dominated by broker recommendations"),
+      src("blog",       95, "https://www.controleng.com/articles/the-broker-problem-mro-2026/",
+          "Control Engineering — The broker problem in industrial MRO",
+          "Industry trade publication, peer-cited"),
+    ],
   }),
 
   makeOpp({
@@ -102,6 +148,19 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
     demand_trend: "Accelerating",
     featured: true,
     rank: 3,
+    sources: [
+      src("techcrunch", 11, "https://techcrunch.com/2026/05/09/tonic-ai-series-c/",
+          "Tonic.ai closes $90M Series C on test-data demand"),
+      src("hackernews", 5,  "https://news.ycombinator.com/item?id=39102345",
+          "Ask HN: Best way to generate realistic test data for HIPAA-bound apps?",
+          "298 points, 142 comments"),
+      src("x",          17, "https://x.com/swyx/status/1820000000000000000",
+          "@swyx — \"Every regulated AI startup hits the test-data wall in week 3.\"",
+          "1,200 likes; thread"),
+      src("arxiv",      88, "https://arxiv.org/abs/2502.10000",
+          "SDV-3: Statistically Faithful Synthetic Tabular Data",
+          "MIT, recent benchmark paper"),
+    ],
   }),
 
   makeOpp({
@@ -154,6 +213,16 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
     demand_trend: "Steady growth",
     featured: true,
     rank: 5,
+    sources: [
+      src("techcrunch", 6,  "https://techcrunch.com/2026/05/14/vanta-q1-2026/",
+          "Vanta crosses $300M ARR as compliance demand spreads down-market"),
+      src("hackernews", 23, "https://news.ycombinator.com/item?id=39080912",
+          "Ask HN: At what stage did you actually need SOC 2?",
+          "421 points, dozens of \"sooner than you think\" replies"),
+      src("reddit",     40, "https://www.reddit.com/r/SaaS/comments/ghi789/",
+          "r/SaaS — \"My first enterprise lead asked for SOC 2 on the second call\"",
+          "284 upvotes"),
+    ],
   }),
 
   makeOpp({
@@ -402,6 +471,16 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
   makeOpp({
     yc_rfs_slug: "ai-personalized-medicine",
     slug: "oncology-second-opinion-network",
+    sources: [
+      src("techcrunch", 9,  "https://techcrunch.com/2026/05/11/genomic-second-opinion-funding/",
+          "Cancer-genomics second-opinion startups raised $180M in Q1 2026"),
+      src("arxiv",      45, "https://arxiv.org/abs/2503.04567",
+          "Outcome-similarity matching for rare-presentation oncology",
+          "Stanford-MSK collaboration"),
+      src("reddit",     12, "https://www.reddit.com/r/cancer/comments/jkl012/",
+          "r/cancer — \"Should I get a second opinion from MSK or Dana-Farber?\"",
+          "Megathread; thousands of comments"),
+    ],
     title: "Personalised oncology second-opinion network",
     one_liner: "Match a patient's full clinical + genomic record against the outcomes of statistically similar patients globally — and return a treatment-plan critique within 72 hours.",
     the_gap: "Cancer patients with rare presentations get treatment plans from whichever oncologist they happen to land with. Top-decile institutions (MSK, Dana-Farber) only see ~3% of US patients. The \"second opinion\" market is informal, expensive, and bottlenecked on celebrity oncologists' calendars.",
@@ -456,6 +535,18 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
   makeOpp({
     yc_rfs_slug: "counter-swarm-defense",
     slug: "tethered-net-interceptor",
+    sources: [
+      src("techcrunch", 4,  "https://techcrunch.com/2026/05/16/anduril-counter-drone-contract/",
+          "Anduril wins $200M DoD counter-drone contract; private market follows"),
+      src("blog",       18, "https://www.cisa.gov/news-events/news/cisa-flags-drone-incursions-2026",
+          "CISA alert — Critical infrastructure drone incursions tripled in 2024",
+          "Government advisory"),
+      src("x",          7,  "https://x.com/dronewars/status/1822000000000000000",
+          "@DroneWars — \"Three substation incursions reported this week alone\"",
+          "Cited by Wall Street Journal energy desk"),
+      src("crunchbase", 90, "https://www.crunchbase.com/organization/counter-uas-systems-co",
+          "Three new counter-UAS startups funded in Q1 2026, totaling $84M"),
+    ],
     title: "Tethered net-interceptor for critical infrastructure",
     one_liner: "An autonomous tethered drone stationed over substations and refineries that physically nets incoming small UAVs — non-explosive, low-collateral, and legal under FAA Part 89.",
     the_gap: "Small commercial-drone incursions over critical infrastructure (substations, refineries, ports) tripled in 2024. Kinetic options (firearms, jammers) are mostly illegal for private operators. There is no off-the-shelf passive interceptor in the $50k-$200k price band.",
@@ -591,6 +682,16 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
   makeOpp({
     yc_rfs_slug: "inference-chips-for-agent-workflows",
     slug: "agent-tuned-inference-asic",
+    sources: [
+      src("techcrunch", 13, "https://techcrunch.com/2026/05/07/groq-langchain-benchmark/",
+          "Groq's agent-workflow benchmark shows 3-5x cost gap vs prompt-completion"),
+      src("arxiv",      28, "https://arxiv.org/abs/2504.12345",
+          "Speculative Decoding for Long-Tool-Call Agent Workloads",
+          "DeepMind"),
+      src("hackernews", 9,  "https://news.ycombinator.com/item?id=39110000",
+          "Why agent inference is harder than chat",
+          "356 points"),
+    ],
     title: "Inference accelerator tuned for agent workflows",
     one_liner: "An ASIC optimised for the speculative-decoding, long-tool-call, branchy patterns that agent systems generate — not the prompt-completion patterns today's chips assume.",
     the_gap: "Today's inference silicon (H100, MI300, Groq) is optimised for batch prompt-completion: maximum tokens/second on uniform-length requests. Real agent workflows are bursty, branching, tool-heavy, and dominated by speculative-decoding overhead. Real-world inference cost is 3-5x worse than the published numbers.",
@@ -726,6 +827,15 @@ export const SAMPLE_OPPORTUNITIES: Opportunity[] = [
   makeOpp({
     yc_rfs_slug: "ai-operating-system-for-companies",
     slug: "agent-orchestration-substrate",
+    sources: [
+      src("techcrunch", 3,  "https://techcrunch.com/2026/05/17/agent-sprawl-cios/",
+          "CIOs warn of \"agent sprawl\" as internal AI tools multiply"),
+      src("x",          10, "https://x.com/sama/status/1823000000000000000",
+          "@sama — \"Every Fortune 500 will have hundreds of agents by 2027.\"",
+          "5,400 likes"),
+      src("blog",       22, "https://www.gartner.com/en/newsroom/press-releases/2026-04-agent-orchestration",
+          "Gartner predicts 60% of enterprises need agent-orchestration layer by 2027"),
+    ],
     title: "Agent orchestration substrate for operations teams",
     one_liner: "The single layer where every internal AI agent in a company lives — with shared identity, data permissions, audit, and workflow handoffs — so the agents stop being a sprawl of disconnected scripts.",
     the_gap: "Mid-size companies already have 5-30 internal AI agents in production (support bots, sales-prep, deal-desk, code review, finance). They run on different stacks (Zapier, n8n, custom Python, vendor platforms), share no identity model, log nowhere, and answer to no audit trail. Compliance teams are starting to notice.",

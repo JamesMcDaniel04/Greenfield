@@ -1,0 +1,119 @@
+{
+  "name": "Greenfield · TechCrunch RSS → ingest-signal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-1",
+      "name": "Every 6 hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "id": "rss-1",
+      "name": "TechCrunch RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "kw-filter",
+              "leftValue": "={{ ($json.title + ' ' + ($json.contentSnippet ?? '')).toLowerCase() }}",
+              "rightValue": "={{ $('Set keywords').first().json.keywords }}",
+              "operator": {
+                "type": "string",
+                "operation": "containsAny"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-1",
+      "name": "Match keywords",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "kw-1",
+              "name": "keywords",
+              "value": "=ai agent,llm,supabase,founder,startup,seed,series a,saas,marketplace,ai-native,inference",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "set-keywords",
+      "name": "Set keywords",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [680, 140]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GREENFIELD_INGEST_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GREENFIELD_INGEST_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source_type\": \"techcrunch\",\n  \"url\": \"{{ $json.link }}\",\n  \"title\": \"{{ $json.title }}\",\n  \"published_at\": \"{{ $json.pubDate ?? $json.isoDate }}\",\n  \"snippet\": \"{{ ($json.contentSnippet ?? '').slice(0, 280) }}\",\n  \"metadata\": { \"creator\": \"{{ $json.creator ?? '' }}\" }\n}",
+        "options": {
+          "response": { "response": { "neverError": true, "responseFormat": "json" } }
+        }
+      },
+      "id": "ingest-1",
+      "name": "POST to ingest-signal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Every 6 hours":      { "main": [[ { "node": "Set keywords",        "type": "main", "index": 0 } ]] },
+    "Set keywords":       { "main": [[ { "node": "TechCrunch RSS",      "type": "main", "index": 0 } ]] },
+    "TechCrunch RSS":     { "main": [[ { "node": "Match keywords",     "type": "main", "index": 0 } ]] },
+    "Match keywords":     { "main": [[ { "node": "POST to ingest-signal","type": "main", "index": 0 } ]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": ["greenfield"]
+}

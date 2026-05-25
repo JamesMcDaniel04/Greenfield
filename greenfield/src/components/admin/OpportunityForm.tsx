@@ -14,7 +14,9 @@ import { VOCAB } from "@/lib/vocab";
 import { slugify } from "@/lib/admin";
 import type { Opportunity } from "@/lib/types";
 
-type FormState = Omit<Opportunity, "id" | "created_at" | "updated_at" | "cover_image_url"> & {
+// Sources are populated by the n8n ingestion pipeline, not edited here, so
+// they're excluded from the admin form's state shape.
+type FormState = Omit<Opportunity, "id" | "created_at" | "updated_at" | "cover_image_url" | "sources"> & {
   cover_image_url?: string | null;
 };
 
@@ -307,7 +309,8 @@ function Field({
 }
 
 function toFormState(opp: Opportunity): FormState {
-  const { id: _id, created_at: _c, updated_at: _u, ...rest } = opp;
-  void _id; void _c; void _u;
+  // sources are managed by the ingestion pipeline, not the admin form
+  const { id: _id, created_at: _c, updated_at: _u, sources: _s, ...rest } = opp;
+  void _id; void _c; void _u; void _s;
   return rest;
 }
