@@ -43,7 +43,7 @@ export default function PracticeIdeasPage() {
     <CatalogueView
       eyebrow="Practice"
       title="AI-friendly build ideas to sharpen your shipping muscles."
-      description="A separate catalog of smaller, evidence-backed builds for people who want reps with Claude Code, Cursor, or Codex. These are tighter workflows with clear inputs and outputs, built to teach you how to ship something real."
+      description="A separate catalog of smaller builds for people who want reps with Claude Code, Cursor, or Codex. These are scored more by the stack they teach and the hiring signal behind those tools than by startup-market size."
       opportunities={visibleOpps}
       isLoading={isLoading}
       hiddenCount={hiddenCount}

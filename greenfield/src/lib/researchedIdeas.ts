@@ -582,6 +582,79 @@ const PRACTICE_THEME_KEYS = new Set<ThemeKey>([
   "freelancerBackOffice",
 ]);
 
+function inferPracticeDifficulty(idea: IdeaSeed): Opportunity["difficulty"] {
+  const hay = `${idea.title} ${idea.niche} ${idea.summary}`.toLowerCase();
+  const hardSignals = [
+    "matcher",
+    "preflight",
+    "scorer",
+    "extract",
+    "matrix",
+    "retriever",
+    "context finder",
+    "citation",
+    "methods",
+    "replay coach",
+    "scope change detector",
+    "risk board",
+    "issue duplicate",
+    "ats keyword",
+  ];
+  const mediumSignals = [
+    "builder",
+    "generator",
+    "scheduler",
+    "tracker",
+    "board",
+    "portal",
+    "digest",
+    "planner",
+    "brief",
+    "combiner",
+    "timeline",
+    "wallet",
+    "converter",
+    "grader",
+    "summarizer",
+  ];
+
+  if (hardSignals.some((signal) => hay.includes(signal))) return "Hard";
+  if (mediumSignals.some((signal) => hay.includes(signal))) return "Medium";
+  return "Easy";
+}
+
+function inferPracticeBuildStack(idea: IdeaSeed, difficulty: Opportunity["difficulty"]): Opportunity["build_stack_hint"] {
+  const hay = `${idea.title} ${idea.niche} ${idea.summary}`.toLowerCase();
+  const heavyIntegrationSignals = [
+    "github",
+    "gmail",
+    "pdf",
+    "oauth",
+    "vector",
+    "retriever",
+    "citation",
+    "issue",
+    "invoice",
+    "api",
+    "context",
+    "extract",
+  ];
+
+  if (difficulty === "Hard") return "Traditional engineering";
+  if (heavyIntegrationSignals.some((signal) => hay.includes(signal))) return "Hybrid";
+  return "AI-coded (Claude/Cursor/Codex)";
+}
+
+function inferPracticeStartingCapital(difficulty: Opportunity["difficulty"]): Opportunity["starting_capital"] {
+  return difficulty === "Hard" ? "$1k-$10k" : "Under $1k";
+}
+
+function inferPracticeLaunchTime(difficulty: Opportunity["difficulty"]): Opportunity["time_to_launch"] {
+  if (difficulty === "Hard") return "1-3 months";
+  if (difficulty === "Medium") return "Weeks";
+  return "Days";
+}
+
 const IDEAS_BY_THEME: Record<ThemeKey, SeedInput[]> = {
   accounting: [
     ["smallTeam", "Client onboarding OS for solo bookkeepers", "Bookkeeping onboarding", "A client-intake workspace for one- and two-person bookkeeping firms that still chase statements, portal access, and kickoff tasks across email and spreadsheets."],
@@ -1322,13 +1395,20 @@ export const RESEARCH_OPPORTUNITIES: Opportunity[] = RESEARCH_IDEAS.map((idea, i
   const theme = THEMES[idea.theme];
   const stage = STAGE_DEFAULTS[idea.stage];
   const model_type = idea.model_type ?? theme.model_type ?? stage.model_type;
+  const practiceDifficulty = idea.stage === "practice" ? inferPracticeDifficulty(idea) : null;
+  const difficulty = idea.difficulty ?? practiceDifficulty ?? stage.difficulty;
   const founder_path = idea.founder_path ?? stage.founder_path;
-  const difficulty = idea.difficulty ?? stage.difficulty;
-  const starting_capital = idea.starting_capital ?? stage.starting_capital;
-  const time_to_launch = idea.time_to_launch ?? stage.time_to_launch;
+  const starting_capital =
+    idea.starting_capital ??
+    (idea.stage === "practice" ? inferPracticeStartingCapital(difficulty) : stage.starting_capital);
+  const time_to_launch =
+    idea.time_to_launch ??
+    (idea.stage === "practice" ? inferPracticeLaunchTime(difficulty) : stage.time_to_launch);
   const build_stack_hint =
     idea.build_stack_hint ??
-    (model_type === "Productized Service"
+    (idea.stage === "practice"
+      ? inferPracticeBuildStack(idea, difficulty)
+      : model_type === "Productized Service"
       ? "No-code"
       : model_type === "API / Usage-Based"
         ? "Traditional engineering"
@@ -1371,6 +1451,12 @@ export const PRACTICE_OPPORTUNITY_SLUGS = new Set(
   RESEARCH_IDEAS
     .filter((idea) => PRACTICE_THEME_KEYS.has(idea.theme))
     .map((idea) => slugify(idea.title)),
+);
+
+export const PRACTICE_THEME_BY_SLUG = new Map(
+  RESEARCH_IDEAS
+    .filter((idea) => PRACTICE_THEME_KEYS.has(idea.theme))
+    .map((idea) => [slugify(idea.title), idea.theme]),
 );
 
 export const PRACTICE_OPPORTUNITIES: Opportunity[] = RESEARCH_OPPORTUNITIES.filter((opp) =>

@@ -11,6 +11,7 @@ import ClaimIdeaButton from "@/components/opportunities/ClaimIdeaButton";
 import BuildBriefPanel from "@/components/opportunities/BuildBriefPanel";
 import SourcesSection from "@/components/opportunities/SourcesSection";
 import { publishedOpportunityFromRow } from "@/lib/catalogue";
+import { isPracticeOpportunity, practiceMetaForOpportunity } from "@/lib/practiceIdeas";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { YC_RFS_BATCH, ycRfsUrl } from "@/lib/yc-rfs";
 import type { Opportunity } from "@/lib/types";
@@ -59,15 +60,34 @@ export default function OpportunityDetailPage() {
     );
   }
 
+  const isPractice = isPracticeOpportunity(opp);
+  const practiceMeta = practiceMetaForOpportunity(opp);
+  const backHref = isPractice ? "/practice" : "/browse";
+  const sections = isPractice
+    ? [
+        { title: "Workflow to improve", body: opp.the_gap },
+        { title: "Why this is a strong practice build", body: opp.the_play },
+        { title: "What makes the workflow real", body: opp.market_size_summary },
+        { title: "Why this stack matters", body: opp.timing_rationale },
+        { title: "How to build it", body: opp.build_path },
+      ]
+    : [
+        { title: "The gap", body: opp.the_gap },
+        { title: "The play", body: opp.the_play },
+        { title: "Market size", body: opp.market_size_summary },
+        { title: "Why now", body: opp.timing_rationale },
+        { title: "How to build it", body: opp.build_path },
+      ];
+
   return (
     <article className="px-6 md:px-10 py-8 max-w-3xl">
       <div className="flex items-center justify-between">
-        <Link to="/browse" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link to={backHref} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
           Back
         </Link>
         <div className="flex items-center gap-2">
-          <ClaimIdeaButton opportunity={opp} variant="outline" size="sm" />
+          {!isPractice && <ClaimIdeaButton opportunity={opp} variant="outline" size="sm" />}
           <SaveButton opportunityId={opp.id} />
         </div>
       </div>
@@ -77,6 +97,9 @@ export default function OpportunityDetailPage() {
         <h1 className="font-display text-3xl md:text-4xl leading-tight">{opp.title}</h1>
 
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          {isPractice && (
+            <Badge className="bg-slate-900 text-white hover:bg-slate-900">Practice build</Badge>
+          )}
           {opp.yc_rfs_slug && (
             <Badge className="gap-1 bg-accent/90 text-accent-foreground hover:bg-accent">
               <Rocket className="h-3 w-3" />
@@ -121,44 +144,91 @@ export default function OpportunityDetailPage() {
       <Separator className="my-8" />
 
       {/* Long-form sections */}
-      <Section title="The gap"        body={opp.the_gap} />
-      <Section title="The play"       body={opp.the_play} />
-      <Section title="Market size"    body={opp.market_size_summary} />
-      <Section title="Why now"        body={opp.timing_rationale} />
-      <Section title="How to build it" body={opp.build_path} />
+      {sections.map((section) => (
+        <Section key={section.title} title={section.title} body={section.body} />
+      ))}
 
       <Separator className="my-10" />
 
-      <section className="rounded-2xl border bg-gradient-to-br from-primary/[0.06] via-card to-accent/[0.08] p-5">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Execution stack</p>
-        <h2 className="mt-2 font-display text-2xl">Claim this idea, then activate the team around it.</h2>
-        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-          The MVP routes each claimed opportunity into a four-agent team and a founder workflow library.
-          GTM, Sales, Marketing, and Engineering stay attached to this brief instead of drifting into generic advice.
-        </p>
-        <div className="mt-5 flex flex-wrap gap-2">
-          <ClaimIdeaButton opportunity={opp} />
-          <Button asChild variant="outline">
-            <Link to={`/agents?idea=${encodeURIComponent(opp.slug)}`}>Open Agents</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link to={`/workflows?idea=${encodeURIComponent(opp.slug)}`}>Open Workflows</Link>
-          </Button>
-        </div>
-      </section>
+      {isPractice && practiceMeta ? (
+        <section className="rounded-2xl border bg-gradient-to-br from-slate-50 via-card to-primary/[0.06] p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Practice stack</p>
+          <h2 className="mt-2 font-display text-2xl">Use this project to learn a hireable stack, not to invent a company.</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            {practiceMeta.hiring_context}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {practiceMeta.tools.map((tool) => (
+              <Badge key={tool} variant="outline">{tool}</Badge>
+            ))}
+            {practiceMeta.skills.map((skill) => (
+              <Badge key={skill} variant="soft">{skill}</Badge>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-2xl border bg-gradient-to-br from-primary/[0.06] via-card to-accent/[0.08] p-5">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Execution stack</p>
+          <h2 className="mt-2 font-display text-2xl">Claim this idea, then activate the team around it.</h2>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            The MVP routes each claimed opportunity into a four-agent team and a founder workflow library.
+            GTM, Sales, Marketing, and Engineering stay attached to this brief instead of drifting into generic advice.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <ClaimIdeaButton opportunity={opp} />
+            <Button asChild variant="outline">
+              <Link to={`/agents?idea=${encodeURIComponent(opp.slug)}`}>Open Agents</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/workflows?idea=${encodeURIComponent(opp.slug)}`}>Open Workflows</Link>
+            </Button>
+          </div>
+        </section>
+      )}
 
       <Separator className="my-10" />
 
-      {/* Demand signal chart */}
-      <section>
-        <h2 className="font-display text-xl">Demand signal</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Synthetic trend illustrating the <span className="font-medium">{opp.demand_trend.toLowerCase()}</span> shape — wire real data in production.
-        </p>
-        <div className="mt-4 rounded-xl border bg-card p-4">
-          <Sparkline seed={opp.slug} trend={opp.demand_trend} width={720} height={180} showAxis className="block w-full h-auto" />
-        </div>
-      </section>
+      {isPractice && practiceMeta ? (
+        <section>
+          <h2 className="font-display text-xl">Skill signal</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Practice ideas are scored by the stack they teach and how transferable those skills are to product and engineering work.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border bg-card p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Hiring signal</p>
+              <p className="mt-2 font-display text-xl">{practiceMeta.hiring_signal}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{practiceMeta.hiring_context}</p>
+            </div>
+            <div className="rounded-xl border bg-card p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Common tools</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {practiceMeta.tools.map((tool) => (
+                  <Badge key={tool} variant="outline">{tool}</Badge>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border bg-card p-4">
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">What you practice</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {practiceMeta.skills.map((skill) => (
+                  <Badge key={skill} variant="soft">{skill}</Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section>
+          <h2 className="font-display text-xl">Demand signal</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Synthetic trend illustrating the <span className="font-medium">{opp.demand_trend.toLowerCase()}</span> shape — wire real data in production.
+          </p>
+          <div className="mt-4 rounded-xl border bg-card p-4">
+            <Sparkline seed={opp.slug} trend={opp.demand_trend} width={720} height={180} showAxis className="block w-full h-auto" />
+          </div>
+        </section>
+      )}
 
       <Separator className="my-10" />
 
@@ -180,9 +250,19 @@ export default function OpportunityDetailPage() {
           <Row label="Starting capital"  value={opp.starting_capital} />
           <Row label="Time to launch"    value={opp.time_to_launch} />
           <Row label="Build approach"    value={opp.build_stack_hint} />
-          <Row label="Moat"              value={opp.moat} />
-          <Row label="Distribution"      value={opp.distribution_play} />
-          <Row label="Demand trend"      value={opp.demand_trend} />
+          {isPractice && practiceMeta ? (
+            <>
+              <Row label="Skill focus"     value={practiceMeta.skills.join(" · ")} />
+              <Row label="Common tools"    value={practiceMeta.tools.join(" · ")} />
+              <Row label="Hiring signal"   value={practiceMeta.hiring_signal} />
+            </>
+          ) : (
+            <>
+              <Row label="Moat"              value={opp.moat} />
+              <Row label="Distribution"      value={opp.distribution_play} />
+              <Row label="Demand trend"      value={opp.demand_trend} />
+            </>
+          )}
         </dl>
       </section>
 

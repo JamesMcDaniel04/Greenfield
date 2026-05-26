@@ -19,7 +19,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // @ts-expect-error
 import Anthropic from "npm:@anthropic-ai/sdk@0.40.1";
 
-import { TOOLS, executeTool, type ToolContext } from "./tools.ts";
+import { toolsForRole, executeTool, type ToolContext, type ToolDefinition } from "./tools.ts";
 
 const MODEL          = "claude-sonnet-4-6";
 const MAX_TOKENS     = 4_000;
@@ -202,6 +202,10 @@ function buildSystemPrompt(role: string, claim: ClaimShape): string {
     "- Call `web_search` for fresh external info — only when internal context is insufficient.",
     "- Call `fetch_url` to read a specific source web_search surfaced.",
     "- Call `save_note` to record explicit handoffs to the other agents or to bookmark a finding.",
+    role === "gtm"         ? "- Call `find_competitors` when you need a competitor list for positioning or pricing." : "",
+    role === "sales"       ? "- Call `find_companies` when you need a target-account list — falls back to web_search if Apollo isn't configured." : "",
+    role === "marketing"   ? "- Call `keyword_volume` to ground content/SEO bets in real demand numbers." : "",
+    role === "engineering" ? "- Call `search_github` to find open-source incumbents or reference implementations before designing." : "",
     "",
     "Output rules:",
     "- Return concrete work product, not generic advice.",
@@ -242,7 +246,8 @@ async function runAgentLoop(args: {
     env,
   };
 
-  const tools = TOOLS.map((t) => ({
+  const availableTools: ToolDefinition[] = toolsForRole(args.agent_role);
+  const tools = availableTools.map((t) => ({
     name: t.name,
     description: t.description,
     input_schema: t.input_schema,
@@ -287,7 +292,7 @@ async function runAgentLoop(args: {
 
     const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
     for (const tu of toolUses) {
-      const tool = TOOLS.find((t) => t.name === tu.name);
+      const tool = availableTools.find((t) => t.name === tu.name);
       if (!tool) {
         toolResults.push({
           type: "tool_result",

@@ -2,11 +2,16 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import OpportunityThumbnail from "@/components/opportunities/OpportunityThumbnail";
+import { isPracticeOpportunity, practiceMetaForOpportunity } from "@/lib/practiceIdeas";
 import type { Opportunity } from "@/lib/types";
 import { DIFFICULTY_TONE } from "@/lib/vocab";
 import { cn } from "@/lib/utils";
 
 export default function OpportunityCard({ opp }: { opp: Opportunity }) {
+  const practiceMeta = practiceMetaForOpportunity(opp);
+  const isPractice = isPracticeOpportunity(opp);
+
   return (
     <Link
       to={`/opportunity/${opp.slug}`}
@@ -15,8 +20,15 @@ export default function OpportunityCard({ opp }: { opp: Opportunity }) {
         "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="h-28">
+        <OpportunityThumbnail opp={opp} />
+      </div>
+
+      <div className="mt-4 flex items-start justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">
+          {isPractice && (
+            <Badge className="bg-slate-900 text-white hover:bg-slate-900">Practice build</Badge>
+          )}
           <Badge variant="soft">{opp.industry}</Badge>
           <Badge variant="outline">{opp.audience}</Badge>
         </div>
@@ -32,7 +44,7 @@ export default function OpportunityCard({ opp }: { opp: Opportunity }) {
         </span>
         <div className="flex items-center gap-1 text-muted-foreground">
           <TrendingUp className="h-3.5 w-3.5" />
-          <span>{opp.demand_trend}</span>
+          <span>{practiceMeta ? practiceMeta.hiring_signal : opp.demand_trend}</span>
         </div>
       </div>
     </Link>

@@ -2,12 +2,16 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, Rocket, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import Sparkline from "./Sparkline";
+import OpportunityThumbnail from "./OpportunityThumbnail";
+import { isPracticeOpportunity, practiceMetaForOpportunity } from "@/lib/practiceIdeas";
 import type { Opportunity } from "@/lib/types";
 import { DIFFICULTY_TONE } from "@/lib/vocab";
 import { cn } from "@/lib/utils";
 
 export default function OpportunityRow({ opp }: { opp: Opportunity }) {
+  const practiceMeta = practiceMetaForOpportunity(opp);
+  const isPractice = isPracticeOpportunity(opp);
+
   return (
     <Link
       to={`/opportunity/${opp.slug}`}
@@ -16,12 +20,15 @@ export default function OpportunityRow({ opp }: { opp: Opportunity }) {
         "hover:border-primary/40 hover:shadow-md",
       )}
     >
-      <div className="flex h-16 items-center justify-center rounded-lg bg-gradient-to-br from-primary/[0.04] to-accent/[0.06]">
-        <Sparkline seed={opp.slug} trend={opp.demand_trend} width={140} height={48} />
+      <div className="h-16">
+        <OpportunityThumbnail opp={opp} compact />
       </div>
 
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-1.5">
+          {isPractice && (
+            <Badge className="bg-slate-900 text-white hover:bg-slate-900">Practice build</Badge>
+          )}
           {opp.yc_rfs_slug && (
             <Badge className="gap-1 bg-accent/90 text-accent-foreground hover:bg-accent">
               <Rocket className="h-3 w-3" />
@@ -53,7 +60,9 @@ export default function OpportunityRow({ opp }: { opp: Opportunity }) {
       </div>
 
       <div className="flex flex-col items-end gap-2">
-        <span className="text-xs font-medium text-muted-foreground">{opp.demand_trend}</span>
+        <span className="text-right text-xs font-medium text-muted-foreground">
+          {practiceMeta ? practiceMeta.hiring_signal : opp.demand_trend}
+        </span>
         <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
     </Link>

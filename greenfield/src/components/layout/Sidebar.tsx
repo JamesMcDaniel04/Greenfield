@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
-  Bookmark, Bot, Code2, Compass, LayoutGrid, LogOut, Mail, Rocket, ShieldCheck, Sparkles, User, Workflow,
+  Bookmark, Bot, Code2, Compass, LayoutGrid, LogOut, Mail, Rocket, ShieldCheck, Sparkles, User, Users, Workflow,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function Sidebar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const isStudio = profile?.plan === "venture_studio" || profile?.plan === "university";
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-border bg-card/60">
@@ -31,6 +32,9 @@ export default function Sidebar() {
         <Section label="Execution">
           <Item to="/agents" icon={<Bot className="h-4 w-4" />}>Agents</Item>
           <Item to="/workflows" icon={<Workflow className="h-4 w-4" />}>Workflows</Item>
+          {isStudio && (
+            <Item to="/team" icon={<Users className="h-4 w-4" />}>Team</Item>
+          )}
         </Section>
 
         <Section label="External">
