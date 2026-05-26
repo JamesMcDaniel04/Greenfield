@@ -1,8 +1,7 @@
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import MissingConfigBanner from "./MissingConfigBanner";
 
 /**
@@ -22,13 +21,6 @@ export default function MarketingLayout() {
             <Logo />
             <span className="font-display text-xl tracking-tight">Greenfield</span>
           </Link>
-
-          <nav className="hidden md:flex items-center gap-1">
-            <TopLink to="/browse">Browse</TopLink>
-            <TopLink to="/practice">Practice</TopLink>
-            <TopLink to="/yc-requests">YC Requests</TopLink>
-            <TopLink to="/pricing">Pricing</TopLink>
-          </nav>
 
           <div className="flex items-center gap-2">
             {user ? (
@@ -93,24 +85,6 @@ export default function MarketingLayout() {
         </div>
       </footer>
     </div>
-  );
-}
-
-function TopLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        cn(
-          "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-          isActive
-            ? "text-primary bg-primary/5"
-            : "text-muted-foreground hover:text-foreground hover:bg-muted",
-        )
-      }
-    >
-      {children}
-    </NavLink>
   );
 }
 
