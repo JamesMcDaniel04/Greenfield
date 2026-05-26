@@ -72,7 +72,9 @@ export default function LandingPage() {
       <section className="border-b border-border/60">
         <div className="container-wide py-16">
           <div className="space-y-3">
-            {featured.map((opp) => <OpportunityRow key={opp.id} opp={opp} />)}
+            {featured.map((opp) => (
+              <OpportunityRow key={opp.id} opp={opp} linkTo={`/preview/${opp.slug}`} />
+            ))}
           </div>
 
           {lockedCount > 0 && (

@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import MarketingLayout from "@/components/layout/MarketingLayout";
 import LandingPage from "@/pages/LandingPage";
+import PreviewOpportunityPage from "@/pages/PreviewOpportunityPage";
 import BrowsePage from "@/pages/BrowsePage";
 import PracticeIdeasPage from "@/pages/PracticeIdeasPage";
 import OpportunityDetailPage from "@/pages/OpportunityDetailPage";
@@ -24,6 +25,7 @@ export default function App() {
       {/* Public marketing shell — top nav + footer, no sidebar. */}
       <Route element={<MarketingLayout />}>
         <Route index element={<LandingPage />} />
+        <Route path="/preview/:slug" element={<PreviewOpportunityPage />} />
       </Route>
 
       {/* App shell — sidebar + main. */}

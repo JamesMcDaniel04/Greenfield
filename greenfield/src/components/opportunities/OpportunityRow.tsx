@@ -8,13 +8,20 @@ import type { Opportunity } from "@/lib/types";
 import { DIFFICULTY_TONE } from "@/lib/vocab";
 import { cn } from "@/lib/utils";
 
-export default function OpportunityRow({ opp }: { opp: Opportunity }) {
+export default function OpportunityRow({
+  opp,
+  linkTo,
+}: {
+  opp: Opportunity;
+  /** Override the default `/opportunity/:slug` link target — e.g. for landing-page previews. */
+  linkTo?: string;
+}) {
   const practiceMeta = practiceMetaForOpportunity(opp);
   const isPractice = isPracticeOpportunity(opp);
 
   return (
     <Link
-      to={`/opportunity/${opp.slug}`}
+      to={linkTo ?? `/opportunity/${opp.slug}`}
       className={cn(
         "group grid grid-cols-[11rem_1fr_auto] items-center gap-6 rounded-xl border bg-card p-4 shadow-sm transition-all",
         "hover:border-primary/40 hover:shadow-md",
