@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Compass, FileText, Filter, Lock, Mail, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Compass, ExternalLink, FileText, Filter, Lock, Mail, Rocket, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,15 +7,17 @@ import OpportunityRow from "@/components/opportunities/OpportunityRow";
 import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
 import { PRACTICE_OPPORTUNITY_SLUGS } from "@/lib/researchedIdeas";
 import { SELF_SERVE_TIERS, TIER_BY_PLAN, type PricingTier } from "@/lib/pricing";
+import type { Opportunity, SourceCitation } from "@/lib/types";
 
 const PREVIEW_COUNT = 10;
 
 export default function LandingPage() {
   const founderOpportunities = SAMPLE_OPPORTUNITIES.filter((opp) => !PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug));
+  const sourcedFounderOpportunities = founderOpportunities.filter((opp) => opp.sources.length > 0);
   const practiceCount = SAMPLE_OPPORTUNITIES.filter((opp) => PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug)).length;
   const totalCount = founderOpportunities.length;
-  const previewCount = Math.min(PREVIEW_COUNT, totalCount);
-  const featured = [...founderOpportunities]
+  const previewCount = Math.min(PREVIEW_COUNT, sourcedFounderOpportunities.length);
+  const featured = [...sourcedFounderOpportunities]
     .sort((a, b) => Number(b.featured) - Number(a.featured) || a.rank - b.rank)
     .slice(0, previewCount);
   const lockedCount = Math.max(0, totalCount - previewCount);
@@ -49,6 +51,9 @@ export default function LandingPage() {
           <p className="mt-3 text-xs text-muted-foreground">
             From $97/year. Preview {previewCount} opportunities below — sign up to unlock the rest.
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Every preview includes direct research links so you can check the demand signals yourself.
+          </p>
         </div>
       </section>
 
@@ -73,7 +78,7 @@ export default function LandingPage() {
         <div className="container-wide py-16">
           <div className="space-y-3">
             {featured.map((opp) => (
-              <OpportunityRow key={opp.id} opp={opp} linkTo={`/preview/${opp.slug}`} />
+              <LandingOpportunityPreview key={opp.id} opp={opp} />
             ))}
           </div>
 
@@ -218,6 +223,81 @@ export default function LandingPage() {
       </section>
     </>
   );
+}
+
+function LandingOpportunityPreview({ opp }: { opp: Opportunity }) {
+  const visibleSources = opp.sources.slice(0, 3);
+
+  return (
+    <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <OpportunityRow opp={opp} linkTo={`/preview/${opp.slug}`} />
+      <div className="border-t border-border/70 bg-muted/[0.18] px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+            Demand Evidence
+          </p>
+          <Link
+            to={`/preview/${opp.slug}`}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            Open full preview
+          </Link>
+        </div>
+
+        <div className="mt-3 grid gap-2 md:grid-cols-3">
+          {visibleSources.map((source) => (
+            <a
+              key={`${opp.id}-${source.url}`}
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl border bg-background/80 p-3 transition-colors hover:border-primary/35 hover:bg-background"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {sourceLabel(source)}
+                </span>
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <p className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-foreground/90">
+                {source.title}
+              </p>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                {source.snippet ?? sourceHost(source.url)}
+              </p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function sourceLabel(source: SourceCitation) {
+  switch (source.source_type) {
+    case "reddit":
+      return "Reddit";
+    case "hackernews":
+      return "Hacker News";
+    case "github":
+      return "GitHub";
+    case "arxiv":
+      return "arXiv";
+    case "blog":
+      return "Article";
+    case "other":
+      return "Source";
+    default:
+      return source.source_type;
+  }
+}
+
+function sourceHost(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
 
 function LandingTierCard({ tier }: { tier: PricingTier }) {
