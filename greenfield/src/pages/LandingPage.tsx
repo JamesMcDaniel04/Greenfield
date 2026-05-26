@@ -52,33 +52,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social proof */}
+      {/* Social proof — coding-assistant logos */}
       <section className="border-b border-border/60 bg-card/50">
-        <div className="container-wide py-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs uppercase tracking-wider text-muted-foreground">
-          <span>Built for founders shipping with</span>
-          <span className="font-medium text-foreground/80">Claude Code</span>
-          <span className="text-foreground/30">·</span>
-          <span className="font-medium text-foreground/80">Cursor</span>
-          <span className="text-foreground/30">·</span>
-          <span className="font-medium text-foreground/80">Codex</span>
-          <span className="text-foreground/30">·</span>
-          <span className="font-medium text-foreground/80">v0</span>
-          <span className="text-foreground/30">·</span>
-          <span className="font-medium text-foreground/80">Bolt</span>
+        <div className="container-wide py-8 flex flex-col items-center gap-5">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">
+            Built for founders shipping with
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+            <AssistantLogo src="/logos/claude-code.png" alt="Claude Code" />
+            <AssistantLogo src="/logos/cursor.jpeg" alt="Cursor" />
+            <AssistantLogo src="/logos/codex.jpeg" alt="Codex" />
+            <AssistantLogo src="/logos/v0.jpeg" alt="v0" />
+            <AssistantLogo src="/logos/bolt.png" alt="Bolt" />
+          </div>
         </div>
       </section>
 
       {/* Preview opportunities */}
       <section className="border-b border-border/60">
         <div className="container-wide py-16">
-          <div className="flex items-baseline justify-between gap-4">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wider text-primary">Featured this week</p>
-              <h2 className="mt-1 font-display text-2xl md:text-3xl">{previewCount} of {totalCount}.</h2>
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-3">
+          <div className="space-y-3">
             {featured.map((opp) => <OpportunityRow key={opp.id} opp={opp} />)}
           </div>
 
@@ -304,6 +297,20 @@ function Step({ n, icon, title, body }: { n: string; icon: React.ReactNode; titl
       </div>
       <h3 className="mt-4 font-display text-lg">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+function AssistantLogo({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100">
+      <img
+        src={src}
+        alt={alt}
+        className="h-7 w-7 rounded-md object-contain"
+        loading="lazy"
+      />
+      <span className="text-sm font-medium text-foreground/80">{alt}</span>
     </div>
   );
 }
