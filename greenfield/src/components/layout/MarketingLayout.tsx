@@ -1,15 +1,18 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import MissingConfigBanner from "./MissingConfigBanner";
 
 /**
- * Public-facing shell — top nav + footer, no sidebar. Used for the landing page
- * and any future marketing routes. App routes use the sidebar Layout instead.
+ * Public-facing shell — top nav + footer, no sidebar. Used for the landing page,
+ * the public opportunity previews, /auth, and /pricing. Members-only routes use
+ * the sidebar Layout instead. Marketing surfaces NEVER deep-link into the
+ * sidebar app — the platform is gated behind a paid subscription.
  */
 export default function MarketingLayout() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-full flex-col">
@@ -25,13 +28,22 @@ export default function MarketingLayout() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                {profile?.is_pro && (
-                  <span className="hidden sm:inline text-xs text-muted-foreground">
-                    Member
-                  </span>
-                )}
-                <Button size="sm" asChild>
-                  <Link to="/browse">Open catalogue</Link>
+                <span className="hidden sm:inline text-xs text-muted-foreground truncate max-w-[16ch]">
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/pricing">Pricing</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const { supabase } = await import("@/lib/supabase");
+                    await supabase.auth.signOut();
+                    navigate("/");
+                  }}
+                >
+                  Sign out
                 </Button>
               </>
             ) : (
@@ -65,10 +77,9 @@ export default function MarketingLayout() {
           </div>
 
           <FooterCol title="Product">
-            <FooterLink to="/browse">Catalogue</FooterLink>
-            <FooterLink to="/practice">Practice</FooterLink>
-            <FooterLink to="/yc-requests">YC Requests</FooterLink>
             <FooterLink to="/pricing">Pricing</FooterLink>
+            <FooterLink to="/#how-it-works">How it works</FooterLink>
+            <FooterLink to="/#faq">FAQ</FooterLink>
           </FooterCol>
 
           <FooterCol title="Account">

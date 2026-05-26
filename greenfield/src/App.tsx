@@ -22,13 +22,17 @@ import TeamPage from "@/pages/TeamPage";
 export default function App() {
   return (
     <Routes>
-      {/* Public marketing shell — top nav + footer, no sidebar. */}
+      {/* Public marketing shell — top nav + footer, no sidebar.
+       * Auth + pricing live here so visitors never see the platform chrome
+       * before they're signed in (and ideally paying). */}
       <Route element={<MarketingLayout />}>
         <Route index element={<LandingPage />} />
         <Route path="/preview/:slug" element={<PreviewOpportunityPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
       </Route>
 
-      {/* App shell — sidebar + main. */}
+      {/* App shell — sidebar + main. Members only. */}
       <Route element={<Layout />}>
         <Route path="/browse" element={<BrowsePage />} />
         <Route path="/practice" element={<PracticeIdeasPage />} />
@@ -39,8 +43,6 @@ export default function App() {
         <Route path="/workflows/:slug" element={<WorkflowDetailPage />} />
         <Route path="/team" element={<TeamPage />} />
         <Route path="/yc-requests" element={<YcRequestsPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/auth" element={<AuthPage />} />
         <Route path="/admin" element={<AdminListPage />} />
         <Route path="/admin/new" element={<AdminEditPage />} />
         <Route path="/admin/edit/:slug" element={<AdminEditPage />} />

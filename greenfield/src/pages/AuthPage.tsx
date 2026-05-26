@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -110,7 +110,7 @@ export default function AuthPage() {
       </p>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        By continuing you agree to the <Link to="/browse" className="underline">terms</Link>.
+        By continuing you agree to the <a href="mailto:hello@greenfield.app?subject=Terms%20of%20service" className="underline">terms</a>.
       </p>
     </section>
   );
