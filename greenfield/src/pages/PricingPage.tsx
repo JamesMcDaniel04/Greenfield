@@ -1,36 +1,40 @@
 import { useEffect } from "react";
 import { Check, CreditCard, Lock, Mail, Sparkles } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 import { useOpenBillingPortal, useStartCheckout } from "@/lib/billing";
+import { markPostCheckoutGrace } from "@/lib/devBypass";
 import { SELF_SERVE_TIERS, TIER_BY_PLAN, type PricingTier } from "@/lib/pricing";
 
 export default function PricingPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const currentPlan = profile?.plan;
   const isPaying = !!currentPlan && currentPlan !== "scout";
 
   const startCheckout = useStartCheckout();
   const openPortal = useOpenBillingPortal();
+  const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     if (checkout === "success") {
-      toast.success("Payment confirmed — your plan will update within a few seconds.");
-      searchParams.delete("checkout");
-      searchParams.delete("session_id");
-      setSearchParams(searchParams, { replace: true });
+      toast.success("Payment confirmed — opening your dashboard.");
+      // Open the gate for ~5 min while Stripe's webhook flips profile.is_pro,
+      // so the Layout guard doesn't immediately bounce them back here.
+      markPostCheckoutGrace();
+      refreshProfile();
+      navigate("/browse", { replace: true });
     } else if (checkout === "canceled") {
       toast.info("Checkout canceled. Your plan didn't change.");
       searchParams.delete("checkout");
       setSearchParams(searchParams, { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, navigate, refreshProfile]);
 
   function startUpgrade(tier: PricingTier) {
     if (tier.plan !== "entrepreneur" && tier.plan !== "venture_studio") return;

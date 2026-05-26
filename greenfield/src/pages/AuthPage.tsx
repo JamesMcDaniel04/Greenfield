@@ -24,8 +24,11 @@ export default function AuthPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        toast.success("Account created — check your inbox to confirm.");
-        navigate(next);
+        toast.success("Account created — pick a plan to continue.");
+        // New accounts must go through Stripe Checkout before reaching the
+        // app shell. The /pricing page handles checkout and the post-payment
+        // hand-off back to /browse.
+        navigate("/pricing?afterSignup=1");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

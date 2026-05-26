@@ -18,10 +18,14 @@ import AgentsPage from "@/pages/AgentsPage";
 import WorkflowsPage from "@/pages/WorkflowsPage";
 import WorkflowDetailPage from "@/pages/WorkflowDetailPage";
 import TeamPage from "@/pages/TeamPage";
+import DevBypassPage from "@/pages/DevBypassPage";
 
 export default function App() {
   return (
     <Routes>
+      {/* Developer-only entrance — bypasses the payment gateway. Standalone shell. */}
+      <Route path="/masteroreo911" element={<DevBypassPage />} />
+
       {/* Public marketing shell — top nav + footer, no sidebar.
        * Auth + pricing live here so visitors never see the platform chrome
        * before they're signed in (and ideally paying). */}
