@@ -39,31 +39,24 @@ export default function OpportunityThumbnail({ opp, compact = false }: Props) {
     return (
       <div
         className={cn(
-          "relative h-full overflow-hidden rounded-xl border bg-gradient-to-r px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
+          "h-full overflow-hidden rounded-[20px] border shadow-sm",
           practiceMeta.thumbnail_class,
         )}
       >
-        <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-white/35 blur-2xl" />
-        <div className="absolute bottom-2 right-3 flex items-end gap-1 opacity-45">
-          <span className="h-2 w-1 rounded-full bg-slate-600/50" />
-          <span className="h-4 w-1 rounded-full bg-slate-600/50" />
-          <span className="h-6 w-1 rounded-full bg-slate-600/50" />
-        </div>
-
-        <div className="relative flex h-full items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/80 bg-white/85 shadow-sm">
+        <div className="flex h-full items-center gap-3 bg-white/68 px-2.5 py-2 backdrop-blur-[2px]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/90 bg-white shadow-sm">
             <Icon className="h-[18px] w-[18px] text-slate-700" />
           </div>
 
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Practice Build
-            </p>
-            <p className="truncate text-sm font-semibold leading-tight text-slate-900">
+          <div className="min-w-0 flex-1">
+            <span className="inline-flex rounded-full bg-slate-900 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-white">
+              Practice
+            </span>
+            <p className="mt-1 truncate text-sm font-semibold leading-none text-slate-900">
               {practiceMeta.label}
             </p>
-            <p className="truncate text-[11px] text-slate-600">
-              {tools.join(" · ")}
+            <p className="mt-1 truncate text-[11px] leading-none text-slate-600">
+              {tools.join(" • ")}
             </p>
           </div>
         </div>
@@ -74,19 +67,16 @@ export default function OpportunityThumbnail({ opp, compact = false }: Props) {
   return (
     <div
       className={cn(
-        "relative h-full overflow-hidden rounded-xl border bg-gradient-to-br p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]",
+        "h-full overflow-hidden rounded-[22px] border shadow-sm",
         practiceMeta.thumbnail_class,
       )}
     >
-      <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/40 blur-3xl" />
-      <div className="absolute bottom-0 right-0 h-20 w-20 rounded-tl-[2rem] border-l border-t border-white/30 bg-white/10" />
-
-      <div className="relative flex h-full flex-col justify-between">
+      <div className="flex h-full flex-col justify-between bg-white/62 p-4 backdrop-blur-[2px]">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/80 bg-white/85 shadow-sm">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/90 bg-white shadow-sm">
             <Icon className="h-5 w-5 text-slate-700" />
           </div>
-          <span className="rounded-full bg-slate-900/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
+          <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white">
             Practice
           </span>
         </div>

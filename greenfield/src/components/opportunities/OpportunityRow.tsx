@@ -16,7 +16,7 @@ export default function OpportunityRow({ opp }: { opp: Opportunity }) {
     <Link
       to={`/opportunity/${opp.slug}`}
       className={cn(
-        "group grid grid-cols-[10rem_1fr_auto] items-center gap-6 rounded-xl border bg-card p-4 shadow-sm transition-all",
+        "group grid grid-cols-[11rem_1fr_auto] items-center gap-6 rounded-xl border bg-card p-4 shadow-sm transition-all",
         "hover:border-primary/40 hover:shadow-md",
       )}
     >
