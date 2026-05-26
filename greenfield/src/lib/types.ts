@@ -129,6 +129,39 @@ export type AgentRun = {
   error: string | null;
 };
 
+export type WorkflowRunStatus = "pending" | "running" | "completed" | "failed" | "cancelled";
+export type WorkflowStepStatus = "pending" | "running" | "succeeded" | "failed" | "skipped";
+
+export type WorkflowStep = {
+  id: string;
+  workflow_run_id: string;
+  ordinal: number;
+  owner_role: "gtm" | "sales" | "marketing" | "engineering";
+  title: string;
+  description: string;
+  status: WorkflowStepStatus;
+  agent_run_id: string | null;
+  output_summary: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  error: string | null;
+};
+
+export type WorkflowRun = {
+  id: string;
+  claim_id: string;
+  workflow_slug: string;
+  workflow_title: string;
+  status: WorkflowRunStatus;
+  current_step: number;
+  step_count: number;
+  started_by: string | null;
+  started_at: string;
+  completed_at: string | null;
+  error: string | null;
+  steps?: WorkflowStep[];
+};
+
 export type Profile = {
   user_id: string;
   display_name: string | null;

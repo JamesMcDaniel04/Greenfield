@@ -20,9 +20,14 @@ type ThemeKey =
   | "gridInterconnection"
   | "freightTransparency"
   | "constructionSafety"
-  | "shiftWork";
+  | "shiftWork"
+  | "openSourceMaintainers"
+  | "jobSearchOps"
+  | "researchWorkflow"
+  | "teacherAdmin"
+  | "freelancerBackOffice";
 
-type ResearchStage = "solo" | "smallTeam" | "domainExpert" | "venture";
+type ResearchStage = "solo" | "smallTeam" | "domainExpert" | "venture" | "practice";
 
 type StageDefaults = {
   founder_path: Opportunity["founder_path"];
@@ -65,6 +70,8 @@ type IdeaSeed = {
   starting_capital?: Opportunity["starting_capital"];
   time_to_launch?: Opportunity["time_to_launch"];
   build_stack_hint?: Opportunity["build_stack_hint"];
+  the_play?: string;
+  build_path?: string;
 };
 
 type SeedTuple = [ResearchStage, string, string, string, Opportunity["model_type"]?];
@@ -128,6 +135,15 @@ const STAGE_DEFAULTS: Record<ResearchStage, StageDefaults> = {
     build_stack_hint: "Traditional engineering",
     revenue_ceiling: "Venture ($10M+ ARR)",
     model_type: "Hardware + Software",
+  },
+  practice: {
+    founder_path: "Bootstrap",
+    difficulty: "Easy",
+    starting_capital: "Under $1k",
+    time_to_launch: "Weeks",
+    build_stack_hint: "AI-coded (Claude/Cursor/Codex)",
+    revenue_ceiling: "Lifestyle ($100k-$1M ARR)",
+    model_type: "SaaS",
   },
 };
 
@@ -467,7 +483,104 @@ const THEMES: Record<ThemeKey, ThemeDefinition> = {
       src("reddit", 120, "https://www.reddit.com/r/restaurantowners/comments/1pzo7ld/do_your_staff_actually_follow_the_schedule_or/", "r/restaurantowners discussion on text-chaos around scheduling", "Operators describe the official schedule living in an app while swaps and call-outs still happen chaotically over text."),
     ],
   },
+  openSourceMaintainers: {
+    industry: "Developer Tools",
+    audience: "Prosumer",
+    niche: "Maintainer workflow tooling",
+    model_type: "SaaS",
+    moat: "Speed of execution",
+    distribution_play: "Community-led",
+    demand_trend: "Accelerating",
+    market_size_summary: "There are more open-source repositories, more AI-assisted contributors, and more issue/PR volume than most solo maintainers can handle. The budget is usually small, but the willingness to try focused tooling is high when the product saves time inside an existing GitHub workflow.",
+    timing_rationale: "GitHub’s own 2025 Octoverse numbers show public repository growth and AI-driven contribution growth, while GitHub is actively publishing tools for issue triage and maintainers are publicly complaining about AI-generated support load. That makes maintainer ops a strong practice-project category with real user pain and accessible APIs.",
+    sources: [
+      src("blog", 210, "https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/", "GitHub Octoverse 2025", "GitHub reported continued growth in developers, repositories, and AI-related project activity."),
+      src("blog", 270, "https://github.blog/open-source/maintainers/how-github-models-can-help-open-source-maintainers-focus-on-what-matters/", "GitHub on helping open-source maintainers focus on what matters", "GitHub is explicitly positioning AI tooling around issue triage, duplicate detection, and contributor onboarding."),
+      src("reddit", 160, "https://www.reddit.com/r/opensource/comments/1pn9qpl/solo_maintainer_suddenly_drowning_in_prsissues_i/", "r/opensource discussion from a solo maintainer drowning in issues and PRs", "Maintainers describe popularity turning into unpaid triage and support work."),
+      src("reddit", 130, "https://www.reddit.com/r/opensource/comments/1q3f89b/open_source_is_being_ddosed_by_ai_slop_and_github/", "r/opensource discussion on AI slop overwhelming maintainers", "Maintainers are now dealing with low-quality AI-generated issues, PRs, and bug reports on top of normal support load."),
+    ],
+  },
+  jobSearchOps: {
+    industry: "Education & Workforce",
+    audience: "B2C",
+    niche: "Job-search workflow tools",
+    model_type: "SaaS",
+    moat: "Brand & community",
+    distribution_play: "Community-led",
+    demand_trend: "Accelerating",
+    market_size_summary: "Job seekers now manage far more application volume, recruiter noise, and resume tailoring than they did a few years ago, but most still resort to spreadsheets, folders, and Gmail search. The willingness to pay is modest, which makes this a better practice-build category than a venture category, but the user pain is real and immediate.",
+    timing_rationale: "Greenhouse and employers are openly acknowledging mass-application fatigue, companies are publishing unprecedented inbound-application numbers, and job seekers keep describing the application process as a black hole. That makes job-search ops fertile ground for narrow tools that teach AI-assisted product building.",
+    sources: [
+      src("blog", 300, "https://www.greenhouse.com/blog/greenhouse-2025-workforce-hiring-report", "Greenhouse 2025 Workforce & Hiring Report", "Hiring platforms are publicly framing the market around bots, burnout, and application overload."),
+      src("blog", 66, "https://www.checklyhq.com/blog/checkly-2025-hiring-data/", "Checkly 2025 hiring data", "Checkly reported more than a thousand applications per posting, showing how much volume candidates now compete inside."),
+      src("blog", 354, "https://www.greenhouse.com/de/newsroom/greenhouse-launches-dream-job-to-fix-job-hunting-and-boost-candidates-chances-of-getting-hired", "Greenhouse launches Dream Job to fix job hunting", "Hiring software vendors are shipping candidate-side tools because the normal application process is failing users."),
+      src("reddit", 81, "https://www.reddit.com/r/recruitinghell/comments/1rkwkox/how_are_you_guys_actually_keeping_track_of_all/", "r/recruitinghell discussion on keeping track of job applications", "Job seekers describe inbox chaos, manual spreadsheets, and losing track of recruiter threads."),
+      src("reddit", 49, "https://www.reddit.com/r/recruitinghell/comments/1str4kp/the_black_hole_and_parasitic_effect_of_applying/", "r/recruitinghell discussion on the black-hole effect of applying", "People are explicitly talking about wasting hours tailoring applications that disappear into unresponsive systems."),
+    ],
+  },
+  researchWorkflow: {
+    industry: "Education & Workforce",
+    audience: "Prosumer",
+    niche: "Research paper workflow",
+    model_type: "SaaS",
+    moat: "Speed of execution",
+    distribution_play: "Community-led",
+    demand_trend: "Steady growth",
+    market_size_summary: "Graduate students, independent researchers, and knowledge workers all struggle with the same core problem: papers, notes, citations, and meeting context spread across too many tools. This is a strong category for practice projects because users already live in exportable formats like PDFs, Markdown, and Zotero libraries.",
+    timing_rationale: "Zotero continues improving its reader and note workflows, researchers are actively experimenting with AI-assisted literature review, and public communities are full of people describing unread-PDF graveyards and messy note systems. That combination makes this a durable practice-build category with clear inputs and outputs.",
+    sources: [
+      src("other", 25, "https://www.zotero.org/support/pdf_reader", "Zotero PDF Reader and Note Editor documentation", "Zotero keeps deepening annotation, note, and PDF-reader workflows that third-party tools can build around."),
+      src("arxiv", 65, "https://arxiv.org/abs/2603.22327", "AgentSLR: Automating Systematic Literature Reviews in Epidemiology with Agentic AI", "Recent research shows active interest in AI-assisted article retrieval, screening, and synthesis."),
+      src("reddit", 54, "https://www.reddit.com/r/PhD/comments/1s7i68f/whats_your_system_for_keeping_track_of_everything/", "r/PhD discussion on keeping track of everything during a PhD", "Researchers describe chaos across papers, emails, chapter notes, and meeting context."),
+      src("reddit", 410, "https://www.reddit.com/r/PhdProductivity/comments/1juy9o6/does_anyone_feel_like_zotero_just_becomes_a/", "r/PhdProductivity discussion on Zotero becoming a graveyard of unread PDFs", "Users explicitly complain that collecting PDFs is easier than turning them into a usable reading workflow."),
+      src("reddit", 19, "https://www.reddit.com/r/PhD/comments/1t41yhs/disorganized_research_workflow_how_did_you_fix_it/", "r/PhD discussion on fixing a disorganized research workflow", "Researchers still describe their systems as chaotic even after adopting several note and reference tools."),
+    ],
+  },
+  teacherAdmin: {
+    industry: "Education & Workforce",
+    audience: "B2C",
+    niche: "Teacher admin workload",
+    model_type: "SaaS",
+    moat: "Brand & community",
+    distribution_play: "Community-led",
+    demand_trend: "Steady growth",
+    market_size_summary: "Teachers have constant, repetitive admin work but limited budgets and limited patience for heavyweight software. That makes teacher-admin products better as tight, AI-friendly workflow tools than as all-in-one platforms, which is exactly why they are strong practice projects.",
+    timing_rationale: "Education Week and RAND continue documenting heavy weekly workloads and expanding non-teaching duties, while teacher communities keep describing grades, parent emails, IEP paperwork, and progress reports as the work that spills into nights and weekends. The pain is stable, visible, and easy to prototype around.",
+    sources: [
+      src("blog", 117, "https://www.edweek.org/teaching-learning/teachers-say-they-keep-getting-new-duties-what-are-they/2026/01", "Education Week on teachers getting new duties", "Education Week reports that teachers still work about 54 hours a week and keep accumulating non-teaching tasks."),
+      src("blog", 1490, "https://www.edweek.org/teaching-learning/how-teachers-spend-their-time-a-breakdown/2022/04", "Education Week breakdown of how teachers spend their time", "The workload data continues to show substantial time outside direct instruction."),
+      src("reddit", 69, "https://www.reddit.com/r/Teachers/comments/1ruyupe/does_anyone_else_feel_like_half_the_job_is_now/", "r/Teachers discussion on half the job feeling like paperwork", "Teachers describe progress reports, documentation, parent communication logs, and assessment data entry taking over the week."),
+      src("reddit", 79, "https://www.reddit.com/r/Teachers/comments/1rkk8m7/teachers_with_5_or_more_preps_how_do_you_deal/", "r/Teachers discussion on grading with five or more preps", "Teachers describe grading, curriculum work, IEP paperwork, meetings, and parent emails eating all available prep time."),
+      src("reddit", 128, "https://www.reddit.com/r/Teachers/comments/1qer8sb/are_you_using_ai_as_a_teacher/", "r/Teachers discussion on using AI behind the scenes", "Teachers are actively looking for ways to reduce workload without surrendering judgment."),
+    ],
+  },
+  freelancerBackOffice: {
+    industry: "Vertical SaaS",
+    audience: "Prosumer",
+    niche: "Freelancer admin and invoicing",
+    model_type: "SaaS",
+    moat: "Speed of execution",
+    distribution_play: "Community-led",
+    demand_trend: "Steady growth",
+    market_size_summary: "Millions of independent workers now handle proposals, contracts, invoices, and scope management themselves, but most still stitch the workflow together from email, Stripe, templates, and reminders. These users do not need a giant suite; they need one painful admin loop to stop leaking time or money.",
+    timing_rationale: "Upwork’s workforce data shows independent knowledge work continuing to grow, PayPal keeps publishing small-business invoicing guidance around late payments, and freelance communities still talk constantly about scope creep and chasing invoices. That makes freelancer back office a reliable practice-build category.",
+    sources: [
+      src("other", 396, "https://investors.upwork.com/node/11771/pdf", "Upwork Future Workforce Index 2025", "Upwork reported that more than one in four U.S. knowledge workers now work independently."),
+      src("blog", 690, "https://www.paypal.com/us/brc/article/create-an-online-invoice-tracker", "PayPal on keeping track of invoices and payments", "Small-business payment tooling still frames invoice tracking and late payments as recurring operational pain."),
+      src("blog", 394, "https://www.upwork.com/resources/late-payment-follow-ups", "Upwork guide to following up on late payments", "Late-payment follow-up remains common enough that Upwork maintains dedicated guidance and templates."),
+      src("reddit", 95, "https://www.reddit.com/r/FreelanceProgramming/comments/1r7cmzl/how_do_you_handle_scope_creep_and_late_payments/", "r/FreelanceProgramming discussion on scope creep and late payments", "Freelancers describe manual invoice updates, payment chasing, and unstructured scope changes as the repeating pain."),
+      src("reddit", 37, "https://www.reddit.com/r/web_design/comments/1rrmke2/how_do_you_guys_actually_handle_scope_creep/", "r/web_design discussion on handling scope creep", "Freelancers are explicitly asking whether a dedicated workflow tool for scope creep would be useful."),
+    ],
+  },
 };
+
+const PRACTICE_THEME_KEYS = new Set<ThemeKey>([
+  "openSourceMaintainers",
+  "jobSearchOps",
+  "researchWorkflow",
+  "teacherAdmin",
+  "freelancerBackOffice",
+]);
 
 const IDEAS_BY_THEME: Record<ThemeKey, SeedInput[]> = {
   accounting: [
@@ -1034,6 +1147,96 @@ const IDEAS_BY_THEME: Record<ThemeKey, SeedInput[]> = {
       build_stack_hint: "Traditional engineering",
     },
   ],
+  openSourceMaintainers: [
+    {
+      stage: "practice",
+      title: "Issue duplicate explainer for solo maintainers",
+      niche: "Issue triage",
+      summary: "A GitHub helper that compares new issues against old ones and drafts a polite duplicate explanation with the most relevant prior links attached.",
+      build_stack_hint: "Traditional engineering",
+    },
+    ["practice", "Release note drafter from merged pull requests", "Release notes", "A small app that turns merged pull requests and labels into a first-pass changelog maintainers can edit instead of writing release notes from scratch."],
+    ["practice", "Contributor onboarding quest board for first PRs", "Contributor onboarding", "A guided board that turns first-time contributor docs into a checklist with repo-specific context, setup steps, and links back to starter issues."],
+    ["practice", "Stale issue reply composer with repo context", "Stale issue handling", "A triage tool that drafts maintainers a short, context-aware reply for stale issues instead of forcing them to write the same status request over and over."],
+    {
+      stage: "practice",
+      title: "Good-first-issue matcher for open-source newcomers",
+      niche: "Issue matching",
+      summary: "A matcher that recommends beginner-friendly issues to new contributors based on language, setup friction, and prior repo activity.",
+      build_stack_hint: "Traditional engineering",
+    },
+    ["practice", "Support inbox for GitHub Issues and Discussions", "Support triage", "A unified inbox that groups repeated support questions across Issues and Discussions so maintainers can answer once and reuse the answer later."],
+    {
+      stage: "practice",
+      title: "AI-slop PR preflight checker for maintainers",
+      niche: "PR quality gates",
+      summary: "A preflight checker that flags suspiciously broad or low-context pull requests before maintainers sink review time into them.",
+      build_stack_hint: "Traditional engineering",
+    },
+    ["practice", "Issue-form completeness scorer", "Issue forms", "A small validator that scores whether a bug report actually contains logs, repro steps, version details, and other fields maintainers keep having to ask for."],
+    ["practice", "Sponsor update digest for open-source projects", "Sponsor communication", "A digest builder that summarizes notable releases, bugs fixed, and roadmap items so maintainers can send sponsor updates without assembling them manually."],
+    ["practice", "Maintainer handoff notes pack", "Maintainer handoffs", "A handoff pack that bundles open incidents, fragile setup steps, and unwritten context when a project gains a new co-maintainer."],
+  ],
+  jobSearchOps: [
+    ["practice", "Job application inbox organizer from confirmation emails", "Application tracking", "A personal dashboard that reads job-application confirmation emails and turns them into a clean timeline instead of a messy folder in Gmail."],
+    ["practice", "Resume-tailoring diff viewer", "Resume tailoring", "A diff viewer that shows exactly how a tailored resume changed against your base resume so you stop losing track of which version said what."],
+    ["practice", "Recruiter follow-up scheduler for ghosted applications", "Follow-up reminders", "A scheduler that tells job seekers when to follow up and drafts a short message from the original application thread details."],
+    ["practice", "Interview research brief from a job description and company site", "Interview prep", "A brief generator that turns a saved job description and company URLs into a fast interview-prep sheet with likely themes and questions to research."],
+    ["practice", "Portfolio bullet storyteller from past project notes", "Portfolio storytelling", "A storyteller that converts rough project notes into stronger portfolio bullets, impact statements, and talking points for interviews."],
+    {
+      stage: "practice",
+      title: "ATS keyword gap checker for saved job posts",
+      niche: "ATS prep",
+      summary: "A checker that compares your resume against a saved job post and highlights missing skills or phrasing before you submit another application into the void.",
+      build_stack_hint: "Traditional engineering",
+    },
+    ["practice", "Salary evidence notebook from saved job listings", "Salary tracking", "A notebook that saves salary ranges, titles, and level clues from job posts so you stop guessing what is normal across similar roles."],
+    ["practice", "Networking CRM for coffee chats and referrals", "Networking follow-up", "A lightweight CRM that tracks who you talked to, what they said, and when you should follow up before warm leads go cold."],
+    ["practice", "Post-application status timeline for job seekers", "Status tracking", "A clean timeline that shows where each application stands, which recruiter thread belongs to it, and what is still waiting on your action."],
+    ["practice", "Interview question replay coach from your own notes", "Interview reflection", "A reflection tool that turns your raw interview notes into a personal question bank, weak-spot tracker, and practice prompts for the next round."],
+  ],
+  researchWorkflow: [
+    ["practice", "Unread-paper queue planner for Zotero libraries", "Reading queue", "A planner that surfaces which unread papers are actually worth reading next based on tags, recency, and your current project focus."],
+    ["practice", "Annotation-to-literature-note combiner", "Annotation synthesis", "A combiner that turns scattered PDF highlights into one usable note with themes, quotes, and citations still attached."],
+    ["practice", "Related-work comparison matrix from tagged PDFs", "Paper comparison", "A matrix builder that compares papers by method, dataset, findings, and limitations without forcing researchers to maintain giant spreadsheets by hand."],
+    ["practice", "Weekly lab reading recap generator", "Reading recaps", "A recap generator that summarizes what a lab group read that week and outputs discussion prompts before the meeting starts."],
+    {
+      stage: "practice",
+      title: "Citation context finder across research notes",
+      niche: "Citation lookup",
+      summary: "A note-search tool that finds where you wrote about a paper, why you saved it, and which project it mattered to before you cite it again out of context.",
+      build_stack_hint: "Traditional engineering",
+    },
+    ["practice", "Meeting prep brief from papers and advisor notes", "Meeting prep", "A prep brief that bundles unread papers, open questions, and last-meeting notes into something a student can review ten minutes before talking to their advisor."],
+    ["practice", "Methods extraction table for small systematic reviews", "Methods extraction", "A table builder that extracts study methods, sample details, and measures into a structured grid for small review projects."],
+    ["practice", "Figure explainer notebook for journal clubs", "Figure understanding", "A notebook that lets users annotate confusing figures, store explanations, and keep the interpretation attached to the original paper."],
+    ["practice", "Paper scorecard for journal club voting", "Paper prioritization", "A scorecard that helps research groups rank which papers are worth discussing based on novelty, clarity, and relevance to the group."],
+    ["practice", "Reviewer-response evidence retriever", "Revision support", "A retriever that helps authors find the exact note, quote, or experiment reference they need when responding to reviewer comments later."],
+  ],
+  teacherAdmin: [
+    ["practice", "Parent email drafter from missing-work context", "Parent communication", "A teacher helper that drafts a parent email from missing assignments, rubric notes, and previous contact history without making the teacher start cold."],
+    ["practice", "Rubric feedback comment bank tied to standards", "Rubric comments", "A comment bank that stores teacher-approved feedback snippets and maps them to rubric criteria and standards."],
+    ["practice", "Progress report generator for missing and late work", "Progress reports", "A progress-report tool that pulls together missing work, current grade trends, and a few teacher notes into something sendable."],
+    ["practice", "IEP accommodation reminder sheet for daily planning", "Accommodation reminders", "A planning view that shows a teacher the accommodations they need to remember for the next class without digging through separate documents."],
+    ["practice", "Small-group rotation planner from roster notes", "Group planning", "A planner that suggests small-group rotations based on teacher notes, recent absences, and current support priorities."],
+    ["practice", "Substitute lesson packet builder from classroom docs", "Sub plans", "A packet builder that assembles lesson steps, seating notes, and emergency context into a sub plan from files teachers already have."],
+    ["practice", "Grading backlog planner by class and prep", "Grading planning", "A backlog planner that helps teachers see which class stack is becoming unmanageable and what can realistically be finished before the next deadline."],
+    ["practice", "Behavior log summarizer for parent conferences", "Behavior summaries", "A summarizer that turns scattered behavior notes into a clear timeline before a parent or administrator meeting."],
+    ["practice", "Assignment regrade request tracker", "Regrade requests", "A tracker that logs student regrade requests, the teacher response, and the final outcome so the same disputes do not keep restarting."],
+    ["practice", "Reading-level quiz rewriter for classroom differentiation", "Differentiated materials", "A tool that rewrites quiz prompts or reading checks into simpler or more supported language while preserving the underlying standard."],
+  ],
+  freelancerBackOffice: [
+    ["practice", "Scope change detector from client email threads", "Scope control", "A client-thread analyzer that flags when a request sounds outside scope before a freelancer quietly eats extra work."],
+    ["practice", "Invoice follow-up scheduler for freelancers", "Invoice chasing", "A scheduler that watches invoice due dates and drafts escalating reminders so freelancers stop manually remembering who still owes money."],
+    ["practice", "Discovery-call notes to proposal draft converter", "Proposal drafting", "A converter that turns messy discovery-call notes into a first proposal outline with scope, assumptions, and next steps."],
+    ["practice", "Client onboarding packet builder from signed proposals", "Client onboarding", "A packet builder that turns a signed proposal into kickoff questions, asset requests, and timeline expectations without retyping everything."],
+    ["practice", "Revision round tracker for creative freelancers", "Revision tracking", "A tracker that records what changed in each revision round so clients cannot keep relabeling new work as a minor tweak."],
+    ["practice", "Monthly retainer summary generator", "Retainer reporting", "A generator that turns time logs, deliverables, and thread highlights into a clean monthly summary for retainer clients."],
+    ["practice", "Freelancer contract clause explainer", "Contract review", "A clause explainer that highlights risky payment, revision, and scope terms in plain English before a freelancer signs."],
+    ["practice", "Client asset request portal for solo freelancers", "Asset collection", "A tiny portal that collects logos, copy, credentials, and approvals so freelancers stop chasing the same files over email."],
+    ["practice", "Testimonial chase reminder board", "Testimonials", "A reminder board that tells freelancers when a project is fresh enough to ask for a testimonial and gives them the right context to include."],
+    ["practice", "Late-payment risk board from invoice history", "Payment risk", "A board that shows which clients regularly pay late and which invoices are following the same pattern again."],
+  ],
 };
 
 function slugify(title: string) {
@@ -1049,6 +1252,17 @@ function gapFor(summary: string) {
 }
 
 function playFor(stage: ResearchStage, modelType: Opportunity["model_type"]) {
+  if (stage === "practice") {
+    const packaging =
+      modelType === "API / Usage-Based"
+        ? "Pick one narrow input and one useful output, and let the API integration do most of the teaching."
+        : modelType === "Productized Service"
+          ? "Make the workflow feel complete end to end, even if some of the work still happens behind the scenes."
+          : "Treat the first version like a polished utility rather than a platform and solve one repetitive workflow all the way through.";
+
+    return `${packaging} Build it with one or two real integrations, a small amount of authentic sample data, and a result users can export, share, or act on immediately.`;
+  }
+
   const packaging =
     modelType === "Productized Service"
       ? "Package the work first as a repeatable service with a clear deliverable and only productize the steps that repeat every week."
@@ -1067,6 +1281,9 @@ function playFor(stage: ResearchStage, modelType: Opportunity["model_type"]) {
 }
 
 function buildPathFor(stage: ResearchStage) {
+  if (stage === "practice") {
+    return "Start with a workflow you can simulate yourself in a day: import a real document, email, PDF, or issue thread; transform it with one reliable AI step; and export the result in a form a user would actually keep. Use AI coding tools to scaffold auth, parsing, and UI, but force yourself to make one polished loop feel trustworthy before adding features.";
+  }
   if (stage === "solo") {
     return "Start with one buyer profile and one deliverable. Sell 5 paid engagements manually, turn the recurring checklist into a lightweight portal or dashboard, and use that artifact to decide what deserves software. Ignore adjacent modules until the first service is repeatable without heroics.";
   }
@@ -1123,10 +1340,10 @@ export const RESEARCH_OPPORTUNITIES: Opportunity[] = RESEARCH_IDEAS.map((idea, i
     title: idea.title,
     one_liner: oneLiner(idea.summary),
     the_gap: gapFor(idea.summary),
-    the_play: playFor(idea.stage, model_type),
+    the_play: idea.the_play ?? playFor(idea.stage, model_type),
     market_size_summary: theme.market_size_summary,
     timing_rationale: theme.timing_rationale,
-    build_path: buildPathFor(idea.stage),
+    build_path: idea.build_path ?? buildPathFor(idea.stage),
     model_type,
     audience: idea.audience ?? theme.audience,
     industry: theme.industry,
@@ -1149,3 +1366,13 @@ export const RESEARCH_OPPORTUNITIES: Opportunity[] = RESEARCH_IDEAS.map((idea, i
     updated_at: BASE_DATE,
   };
 });
+
+export const PRACTICE_OPPORTUNITY_SLUGS = new Set(
+  RESEARCH_IDEAS
+    .filter((idea) => PRACTICE_THEME_KEYS.has(idea.theme))
+    .map((idea) => slugify(idea.title)),
+);
+
+export const PRACTICE_OPPORTUNITIES: Opportunity[] = RESEARCH_OPPORTUNITIES.filter((opp) =>
+  PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug),
+);
