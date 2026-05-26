@@ -4,6 +4,8 @@ import { ArrowLeft, ArrowRight, ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import RunWorkflowButton from "@/components/workflows/RunWorkflowButton";
+import WorkflowRunsList from "@/components/workflows/WorkflowRunsList";
 import { useClaimedIdeas } from "@/lib/claims";
 import { AGENT_ROLE_LABEL } from "@/lib/execution";
 import { workflowBySlug, workflowFitNarrative, WORKFLOW_GUIDES } from "@/lib/workflows";
@@ -44,13 +46,14 @@ export default function WorkflowDetailPage() {
           Back to library
         </Link>
         <div className="flex flex-wrap gap-2">
+          <RunWorkflowButton workflow={workflow} />
           <Button asChild variant="outline">
             <Link to={`/agents${activeClaim ? `?idea=${encodeURIComponent(activeClaim.opportunity_slug)}` : ""}`}>
               Open agents
             </Link>
           </Button>
           {activeClaim ? (
-            <Button asChild>
+            <Button asChild variant="ghost">
               <Link to={`/opportunity/${activeClaim.opportunity_slug}`}>
                 View claimed idea <ArrowRight className="h-4 w-4" />
               </Link>
@@ -104,6 +107,19 @@ export default function WorkflowDetailPage() {
               <ModeCard title="Validated now" body={workflow.implementation.validated} />
               <ModeCard title="Agent-assisted" body={workflow.implementation.agentic} />
               <ModeCard title="Automate later" body={workflow.implementation.automation} />
+            </div>
+          </section>
+
+          <section>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-display text-2xl">Runs</h2>
+              <RunWorkflowButton workflow={workflow} variant="outline" />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Each run fires the {workflow.steps.length} agents in sequence — GTM → Sales → Marketing → Engineering as the workflow declares. Click a run to see step-by-step agent output.
+            </p>
+            <div className="mt-4">
+              <WorkflowRunsList workflow={workflow} claim={activeClaim} />
             </div>
           </section>
         </div>

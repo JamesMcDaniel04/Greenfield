@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { ClaimedIdea, WorkflowTemplate } from "@/lib/execution";
 import type {
-  AgentRun, WorkflowRun, WorkflowRunStatus, WorkflowStep, WorkflowStepStatus,
+  AgentRun, WorkflowRun, WorkflowStep, WorkflowStepStatus,
 } from "@/lib/types";
 import { makeDemoRun } from "@/lib/sampleAgentRuns";
 
@@ -25,10 +25,12 @@ const STEP_DELAY_MS = 1_400; // demo-mode pacing so the UI shows visible progres
 export function composeStepPrompt(args: {
   workflow: WorkflowTemplate;
   step: WorkflowTemplate["steps"][number];
+  ordinal: number;
+  totalSteps: number;
   claim: ClaimedIdea;
   priorSummaries: Array<{ ordinal: number; owner: string; title: string; summary: string }>;
 }): string {
-  const { workflow, step, claim, priorSummaries } = args;
+  const { workflow, step, ordinal, totalSteps, claim, priorSummaries } = args;
   const priorBlock = priorSummaries.length
     ? "\n\nPrior steps:\n" + priorSummaries
         .map((p) => `${p.ordinal}. [${p.owner.toUpperCase()}] ${p.title}\n   → ${p.summary}`)
@@ -36,7 +38,7 @@ export function composeStepPrompt(args: {
     : "";
 
   return [
-    `You are running step ${step} of the "${workflow.title}" workflow on the claimed idea "${claim.title}".`,
+    `You are running step ${ordinal} of ${totalSteps} in the "${workflow.title}" workflow on the claimed idea "${claim.title}".`,
     "",
     `Workflow objective: ${workflow.objective}`,
     `Stage: ${workflow.stage} · Category: ${workflow.category} · Setup time: ${workflow.setup_time}`,
@@ -227,6 +229,8 @@ export function useRunWorkflow(claim: ClaimedIdea | null) {
         const prompt = composeStepPrompt({
           workflow,
           step: workflow.steps[step.ordinal - 1],
+          ordinal: step.ordinal,
+          totalSteps: workflow.steps.length,
           claim,
           priorSummaries,
         });
