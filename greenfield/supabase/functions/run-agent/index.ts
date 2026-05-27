@@ -25,8 +25,8 @@ const MODEL          = "claude-sonnet-4-6";
 const MAX_TOKENS     = 4_000;
 const MAX_ITERATIONS = 8;
 
-const VALID_ROLES = new Set(["research", "gtm", "sales", "marketing", "engineering"]);
-type AgentRole = "research" | "gtm" | "sales" | "marketing" | "engineering";
+const VALID_ROLES = new Set(["research", "gtm", "sales", "marketing", "engineering", "mentor", "evaluator"]);
+type AgentRole = "research" | "gtm" | "sales" | "marketing" | "engineering" | "mentor" | "evaluator";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +65,7 @@ Deno.serve(async (req: Request) => {
     claim_id?: string;
     user_idea_id?: string;
     user_project_id?: string;
+    submission_id?: string;
     agent_role?: string;
     prompt?: string;
   };
@@ -75,12 +76,13 @@ Deno.serve(async (req: Request) => {
   const subjectFkCount =
     (body.claim_id ? 1 : 0) +
     (body.user_idea_id ? 1 : 0) +
-    (body.user_project_id ? 1 : 0);
+    (body.user_project_id ? 1 : 0) +
+    (body.submission_id ? 1 : 0);
   if (subjectFkCount !== 1) {
-    return json({ error: "INVALID_INPUT", details: "exactly one of claim_id, user_idea_id, user_project_id is required" }, 400);
+    return json({ error: "INVALID_INPUT", details: "exactly one of claim_id, user_idea_id, user_project_id, submission_id is required" }, 400);
   }
   if (!VALID_ROLES.has(body.agent_role)) {
-    return json({ error: "INVALID_INPUT", details: "agent_role must be research | gtm | sales | marketing | engineering" }, 400);
+    return json({ error: "INVALID_INPUT", details: "agent_role must be research | gtm | sales | marketing | engineering | mentor | evaluator" }, 400);
   }
 
   // Service-role client for writes the user can't perform via RLS
@@ -92,17 +94,23 @@ Deno.serve(async (req: Request) => {
   if ("error" in resolved) return json({ error: resolved.error }, resolved.status);
   const subject = resolved.subject;
 
-  // BYO enforcement: plan must unlock BYO, and the team must have monthly quota.
-  if (subject.kind !== "claim") {
+  // Quota enforcement:
+  // - BYO subjects (user_idea, user_project) gate on byo_runs_per_month_quota.
+  // - Submission subjects (Career track) gate on career_runs_per_month_quota.
+  if (subject.kind === "user_idea" || subject.kind === "user_project") {
     const gate = await checkByoQuota(admin, subject.team_id);
+    if ("error" in gate) return json({ error: gate.error }, 403);
+  } else if (subject.kind === "submission") {
+    const gate = await checkCareerQuota(admin, subject.team_id);
     if ("error" in gate) return json({ error: gate.error }, 403);
   }
 
   // Insert the run row (status=running) so the UI can show it immediately
-  const subjectFk =
-    subject.kind === "claim"        ? { claim_id: subject.id } :
-    subject.kind === "user_idea"    ? { user_idea_id: subject.id } :
-                                      { user_project_id: subject.id };
+  let subjectFk: Record<string, string>;
+  if (subject.kind === "claim") subjectFk = { claim_id: subject.id };
+  else if (subject.kind === "user_idea") subjectFk = { user_idea_id: subject.id };
+  else if (subject.kind === "user_project") subjectFk = { user_project_id: subject.id };
+  else subjectFk = { submission_id: subject.id };
   const { data: runRow, error: runErr } = await admin
     .from("agent_runs")
     .insert({
@@ -162,6 +170,14 @@ Deno.serve(async (req: Request) => {
 // ─────────────────────────────────────────────────────────────────────────
 
 const ROLE_PERSONAS: Record<string, { name: string; mission: (s: Subject) => string }> = {
+  mentor: {
+    name: "Mentor Agent",
+    mission: (s) => `Help the learner understand and ship the ${s.career?.project_title ?? s.title} project. Their goal is to learn, not to copy code. Never paste working solutions.`,
+  },
+  evaluator: {
+    name: "Evaluator Agent",
+    mission: (s) => `Grade the learner's ${s.career?.project_title ?? s.title} submission against the rubric. Be specific, cite the artifacts, and reject AI-generated tells.`,
+  },
   research: {
     name: "Research Agent",
     mission: (s) => `Build the upstream evidence base for ${s.title}: who else operates in ${(s.niche ?? s.industry).toLowerCase()}, what has been acquired or merged in the last 24 months, and which industry signals justify acting now.`,
@@ -188,11 +204,14 @@ const ROLE_PERSONAS: Record<string, { name: string; mission: (s: Subject) => str
 
 /**
  * Normalized subject the persona builder and tool layer both work against.
- * Catalogue claims, user_ideas, and user_projects all collapse to this shape.
+ * Catalogue claims, user_ideas, user_projects, and career submissions all
+ * collapse to this shape. The `career` block is populated for submission
+ * subjects and carries the rubric / anti-cheat questions the mentor +
+ * evaluator agents need.
  */
 type Subject = {
-  kind: "claim" | "user_idea" | "user_project";
-  id: string;                  // claim.id | user_idea.id | user_project.id
+  kind: "claim" | "user_idea" | "user_project" | "submission";
+  id: string;
   team_id: string;
   /** Present only for catalogue claims — used by tools that look up signals/briefs. */
   opportunity_id: string | null;
@@ -210,6 +229,25 @@ type Subject = {
   difficulty: string;
   starting_capital: string;
   time_to_launch: string;
+
+  /** Populated when kind === "submission". */
+  career?: {
+    enrollment_id: string;
+    track_slug: string;
+    track_title: string;
+    project_slug: string;
+    project_title: string;
+    hireable_skill: string;
+    starter_brief_md: string | null;
+    rubric: unknown[];
+    anti_cheat_questions: unknown[];
+    repo_url: string | null;
+    deploy_url: string | null;
+    demo_url: string | null;
+    written_answers: Record<string, unknown>;
+    status: string;
+    attempt_no: number;
+  };
 };
 
 const FALLBACK = "unspecified";
@@ -221,8 +259,11 @@ function normFallback(v: string | null | undefined): string {
 // @ts-expect-error — supabase-js client typing is fine at runtime
 async function resolveSubject(
   userClient: ReturnType<typeof createClient>,
-  body: { claim_id?: string; user_idea_id?: string; user_project_id?: string },
+  body: { claim_id?: string; user_idea_id?: string; user_project_id?: string; submission_id?: string },
 ): Promise<{ subject: Subject } | { error: string; status: number }> {
+  if (body.submission_id) {
+    return resolveSubmissionSubject(userClient, body.submission_id);
+  }
   if (body.claim_id) {
     const { data, error } = await userClient
       .from("idea_claims")
@@ -312,6 +353,109 @@ async function checkByoQuota(
   const used = (usage?.runs_used as number | undefined) ?? 0;
   if (used >= quota) return { error: "BYO_QUOTA_EXCEEDED" };
   return { ok: true };
+}
+
+// @ts-expect-error — supabase-js client typing is fine at runtime
+async function checkCareerQuota(
+  admin: ReturnType<typeof createClient>,
+  team_id: string,
+): Promise<{ ok: true } | { error: string }> {
+  const { data: team } = await admin
+    .from("teams")
+    .select("career_runs_per_month_quota")
+    .eq("id", team_id)
+    .maybeSingle();
+  const quota = (team?.career_runs_per_month_quota as number | undefined) ?? 0;
+  if (quota <= 0) return { error: "CAREER_PLAN_REQUIRED" };
+
+  const ym = new Date().toISOString().slice(0, 7);
+  const { data: usage } = await admin
+    .from("career_usage_monthly")
+    .select("runs_used")
+    .eq("team_id", team_id)
+    .eq("year_month", ym)
+    .maybeSingle();
+  const used = (usage?.runs_used as number | undefined) ?? 0;
+  if (used >= quota) return { error: "CAREER_QUOTA_EXCEEDED" };
+  return { ok: true };
+}
+
+// @ts-expect-error — supabase-js client typing is fine at runtime
+async function resolveSubmissionSubject(
+  userClient: ReturnType<typeof createClient>,
+  submission_id: string,
+): Promise<{ subject: Subject } | { error: string; status: number }> {
+  // Pulls submission + enrollment + project + track, plus the learner's
+  // personal team_id (which carries the career quota).
+  const { data, error } = await userClient
+    .from("career_submissions")
+    .select(`
+      id, enrollment_id, project_slug, status, attempt_no,
+      repo_url, deploy_url, demo_url, written_answers,
+      career_enrollments!inner(
+        id, user_id, track_slug,
+        career_tracks!inner(slug, title, target_role)
+      ),
+      career_projects!inner(
+        slug, title, hireable_skill, starter_brief_md, rubric, anti_cheat_questions
+      )
+    `)
+    .eq("id", submission_id)
+    .maybeSingle();
+  if (error || !data) return { error: "SUBJECT_NOT_FOUND", status: 404 };
+
+  // RLS guarantees only the owning learner (or admin) can read it.
+  const enrollment = data.career_enrollments as Record<string, unknown>;
+  const track = (enrollment.career_tracks as Record<string, unknown>) ?? {};
+  const project = data.career_projects as Record<string, unknown>;
+
+  // The learner's personal team carries the quota.
+  const { data: prof } = await userClient
+    .from("profiles")
+    .select("personal_team_id")
+    .eq("user_id", enrollment.user_id as string)
+    .maybeSingle();
+  const team_id = (prof?.personal_team_id as string | null) ?? "";
+  if (!team_id) return { error: "NO_PERSONAL_TEAM", status: 409 };
+
+  return {
+    subject: {
+      kind: "submission",
+      id: data.id as string,
+      team_id,
+      opportunity_id: null,
+      opportunity_slug: null,
+      title: normFallback(project.title as string | null),
+      one_liner: normFallback(project.hireable_skill as string | null),
+      audience: FALLBACK,
+      industry: "AI / Automation",
+      niche: (track.target_role as string | null) ?? null,
+      model_type: FALLBACK,
+      distribution_play: FALLBACK,
+      demand_trend: FALLBACK,
+      founder_path: FALLBACK,
+      difficulty: FALLBACK,
+      starting_capital: FALLBACK,
+      time_to_launch: FALLBACK,
+      career: {
+        enrollment_id: enrollment.id as string,
+        track_slug: enrollment.track_slug as string,
+        track_title: normFallback(track.title as string | null),
+        project_slug: data.project_slug as string,
+        project_title: normFallback(project.title as string | null),
+        hireable_skill: normFallback(project.hireable_skill as string | null),
+        starter_brief_md: (project.starter_brief_md as string | null) ?? null,
+        rubric: (project.rubric as unknown[]) ?? [],
+        anti_cheat_questions: (project.anti_cheat_questions as unknown[]) ?? [],
+        repo_url: (data.repo_url as string | null) ?? null,
+        deploy_url: (data.deploy_url as string | null) ?? null,
+        demo_url: (data.demo_url as string | null) ?? null,
+        written_answers: (data.written_answers as Record<string, unknown>) ?? {},
+        status: data.status as string,
+        attempt_no: (data.attempt_no as number) ?? 1,
+      },
+    },
+  };
 }
 
 function buildSystemPrompt(role: string, subject: Subject): string {
