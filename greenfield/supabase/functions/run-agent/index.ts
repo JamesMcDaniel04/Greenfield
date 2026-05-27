@@ -61,32 +61,52 @@ Deno.serve(async (req: Request) => {
   if (userErr || !userData.user) return json({ error: "UNAUTHENTICATED" }, 401);
 
   // Parse + validate
-  let body: { claim_id?: string; agent_role?: string; prompt?: string };
+  let body: {
+    claim_id?: string;
+    user_idea_id?: string;
+    user_project_id?: string;
+    agent_role?: string;
+    prompt?: string;
+  };
   try { body = await req.json(); } catch { return json({ error: "INVALID_INPUT" }, 400); }
-  if (!body.claim_id || !body.agent_role || !body.prompt) {
-    return json({ error: "INVALID_INPUT", details: "claim_id, agent_role, and prompt are required" }, 400);
+  if (!body.agent_role || !body.prompt) {
+    return json({ error: "INVALID_INPUT", details: "agent_role and prompt are required" }, 400);
+  }
+  const subjectFkCount =
+    (body.claim_id ? 1 : 0) +
+    (body.user_idea_id ? 1 : 0) +
+    (body.user_project_id ? 1 : 0);
+  if (subjectFkCount !== 1) {
+    return json({ error: "INVALID_INPUT", details: "exactly one of claim_id, user_idea_id, user_project_id is required" }, 400);
   }
   if (!VALID_ROLES.has(body.agent_role)) {
     return json({ error: "INVALID_INPUT", details: "agent_role must be research | gtm | sales | marketing | engineering" }, 400);
   }
 
-  // Ownership: caller must belong to the claim's team
-  const { data: claim, error: claimErr } = await userClient
-    .from("idea_claims")
-    .select("id, opportunity_id, team_id, status, opportunities!inner(slug, title, one_liner, audience, industry, niche, model_type, distribution_play, demand_trend, founder_path, difficulty, starting_capital, time_to_launch)")
-    .eq("id", body.claim_id)
-    .maybeSingle();
-  if (claimErr || !claim) return json({ error: "CLAIM_NOT_FOUND" }, 404);
-  if (claim.status !== "active") return json({ error: "CLAIM_NOT_ACTIVE" }, 409);
-
   // Service-role client for writes the user can't perform via RLS
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
+  // Resolve the subject. For catalogue claims we fetch the joined opportunity;
+  // for BYO subjects we fetch the row + verify team membership.
+  const resolved = await resolveSubject(userClient, body);
+  if ("error" in resolved) return json({ error: resolved.error }, resolved.status);
+  const subject = resolved.subject;
+
+  // BYO enforcement: plan must unlock BYO, and the team must have monthly quota.
+  if (subject.kind !== "claim") {
+    const gate = await checkByoQuota(admin, subject.team_id);
+    if ("error" in gate) return json({ error: gate.error }, 403);
+  }
+
   // Insert the run row (status=running) so the UI can show it immediately
+  const subjectFk =
+    subject.kind === "claim"        ? { claim_id: subject.id } :
+    subject.kind === "user_idea"    ? { user_idea_id: subject.id } :
+                                      { user_project_id: subject.id };
   const { data: runRow, error: runErr } = await admin
     .from("agent_runs")
     .insert({
-      claim_id: body.claim_id,
+      ...subjectFk,
       agent_role: body.agent_role,
       status: "running",
       prompt: body.prompt,
@@ -101,7 +121,7 @@ Deno.serve(async (req: Request) => {
       anthropicKey: ANTHROPIC_API_KEY,
       agent_role: body.agent_role as AgentRole,
       prompt: body.prompt,
-      claim,
+      subject,
       admin,
     });
 
@@ -141,69 +161,183 @@ Deno.serve(async (req: Request) => {
 // without importing it (edge functions can't reach the React tree).
 // ─────────────────────────────────────────────────────────────────────────
 
-const ROLE_PERSONAS: Record<string, { name: string; mission: (c: ClaimShape) => string }> = {
+const ROLE_PERSONAS: Record<string, { name: string; mission: (s: Subject) => string }> = {
   research: {
     name: "Research Agent",
-    mission: (c) => `Build the upstream evidence base for ${c.opportunities.title}: who else operates in ${(c.opportunities.niche ?? c.opportunities.industry).toLowerCase()}, what has been acquired or merged in the last 24 months, and which industry signals justify acting now.`,
+    mission: (s) => `Build the upstream evidence base for ${s.title}: who else operates in ${(s.niche ?? s.industry).toLowerCase()}, what has been acquired or merged in the last 24 months, and which industry signals justify acting now.`,
   },
   gtm: {
     name: "GTM Agent",
-    mission: (c) => `Define the initial market wedge for ${c.opportunities.title} so the founder has one segment, one promise, and one launch motion to run in the next ${c.opportunities.time_to_launch.toLowerCase()}.`,
+    mission: (s) => `Define the initial market wedge for ${s.title} so the founder has one segment, one promise, and one launch motion to run in the next ${s.time_to_launch.toLowerCase()}.`,
   },
   sales: {
     name: "Sales Agent",
-    mission: (c) => c.opportunities.audience.toLowerCase() === "b2b"
-      ? `Turn ${c.opportunities.title} into live pipeline by recruiting design partners and revenue conversations inside ${(c.opportunities.niche ?? c.opportunities.industry).toLowerCase()}.`
-      : `Turn ${c.opportunities.title} into monetizable demand through partnerships, waitlist conversion, and revenue-bearing customer conversations.`,
+    mission: (s) => s.audience.toLowerCase() === "b2b"
+      ? `Turn ${s.title} into live pipeline by recruiting design partners and revenue conversations inside ${(s.niche ?? s.industry).toLowerCase()}.`
+      : `Turn ${s.title} into monetizable demand through partnerships, waitlist conversion, and revenue-bearing customer conversations.`,
   },
   marketing: {
     name: "Marketing Agent",
-    mission: (c) => `Build a repeatable narrative for ${c.opportunities.title} so every landing page, thread, and proof asset reinforces the same ${c.opportunities.distribution_play.toLowerCase()} wedge.`,
+    mission: (s) => `Build a repeatable narrative for ${s.title} so every landing page, thread, and proof asset reinforces the same ${s.distribution_play.toLowerCase()} wedge.`,
   },
   engineering: {
     name: "Engineering Agent",
-    mission: (c) => `Ship the smallest viable version of ${c.opportunities.title} that proves the core workflow for ${c.opportunities.audience.toLowerCase()} buyers without broadening into a suite.`,
+    mission: (s) => `Ship the smallest viable version of ${s.title} that proves the core workflow for ${s.audience.toLowerCase()} buyers without broadening into a suite.`,
   },
 };
 
-type ClaimShape = {
-  id: string;
-  opportunity_id: string;
-  opportunities: {
-    slug: string;
-    title: string;
-    one_liner: string;
-    audience: string;
-    industry: string;
-    niche: string | null;
-    model_type: string;
-    distribution_play: string;
-    demand_trend: string;
-    founder_path: string;
-    difficulty: string;
-    starting_capital: string;
-    time_to_launch: string;
-  };
+/**
+ * Normalized subject the persona builder and tool layer both work against.
+ * Catalogue claims, user_ideas, and user_projects all collapse to this shape.
+ */
+type Subject = {
+  kind: "claim" | "user_idea" | "user_project";
+  id: string;                  // claim.id | user_idea.id | user_project.id
+  team_id: string;
+  /** Present only for catalogue claims — used by tools that look up signals/briefs. */
+  opportunity_id: string | null;
+  opportunity_slug: string | null;
+
+  title: string;
+  one_liner: string;
+  audience: string;
+  industry: string;
+  niche: string | null;
+  model_type: string;
+  distribution_play: string;
+  demand_trend: string;
+  founder_path: string;
+  difficulty: string;
+  starting_capital: string;
+  time_to_launch: string;
 };
 
-function buildSystemPrompt(role: string, claim: ClaimShape): string {
+const FALLBACK = "unspecified";
+
+function normFallback(v: string | null | undefined): string {
+  return v && v.trim() ? v : FALLBACK;
+}
+
+// @ts-expect-error — supabase-js client typing is fine at runtime
+async function resolveSubject(
+  userClient: ReturnType<typeof createClient>,
+  body: { claim_id?: string; user_idea_id?: string; user_project_id?: string },
+): Promise<{ subject: Subject } | { error: string; status: number }> {
+  if (body.claim_id) {
+    const { data, error } = await userClient
+      .from("idea_claims")
+      .select("id, opportunity_id, team_id, status, opportunities!inner(slug, title, one_liner, audience, industry, niche, model_type, distribution_play, demand_trend, founder_path, difficulty, starting_capital, time_to_launch)")
+      .eq("id", body.claim_id)
+      .maybeSingle();
+    if (error || !data) return { error: "CLAIM_NOT_FOUND", status: 404 };
+    if (data.status !== "active") return { error: "CLAIM_NOT_ACTIVE", status: 409 };
+    const o = data.opportunities as Record<string, string | null>;
+    return {
+      subject: {
+        kind: "claim",
+        id: data.id as string,
+        team_id: data.team_id as string,
+        opportunity_id: data.opportunity_id as string,
+        opportunity_slug: (o.slug as string) ?? null,
+        title: normFallback(o.title),
+        one_liner: normFallback(o.one_liner),
+        audience: normFallback(o.audience),
+        industry: normFallback(o.industry),
+        niche: o.niche,
+        model_type: normFallback(o.model_type),
+        distribution_play: normFallback(o.distribution_play),
+        demand_trend: normFallback(o.demand_trend),
+        founder_path: normFallback(o.founder_path),
+        difficulty: normFallback(o.difficulty),
+        starting_capital: normFallback(o.starting_capital),
+        time_to_launch: normFallback(o.time_to_launch),
+      },
+    };
+  }
+
+  // BYO: user_idea or user_project — RLS gates visibility to team members.
+  const table = body.user_idea_id ? "user_ideas" : "user_projects";
+  const id = (body.user_idea_id ?? body.user_project_id) as string;
+  const titleCol = body.user_idea_id ? "one_liner" : "summary";
+  const { data, error } = await userClient
+    .from(table)
+    .select(`id, team_id, title, ${titleCol}, audience, industry, niche, model_type, distribution_play, demand_trend, founder_path, starting_capital, time_to_launch`)
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return { error: "SUBJECT_NOT_FOUND", status: 404 };
+  const row = data as Record<string, string | null>;
+  return {
+    subject: {
+      kind: body.user_idea_id ? "user_idea" : "user_project",
+      id: row.id as string,
+      team_id: row.team_id as string,
+      opportunity_id: null,
+      opportunity_slug: null,
+      title: normFallback(row.title),
+      one_liner: normFallback(row[titleCol] as string | null),
+      audience: normFallback(row.audience),
+      industry: normFallback(row.industry),
+      niche: row.niche,
+      model_type: normFallback(row.model_type),
+      distribution_play: normFallback(row.distribution_play),
+      demand_trend: normFallback(row.demand_trend),
+      founder_path: normFallback(row.founder_path),
+      difficulty: FALLBACK,
+      starting_capital: normFallback(row.starting_capital),
+      time_to_launch: normFallback(row.time_to_launch),
+    },
+  };
+}
+
+// @ts-expect-error — supabase-js client typing is fine at runtime
+async function checkByoQuota(
+  admin: ReturnType<typeof createClient>,
+  team_id: string,
+): Promise<{ ok: true } | { error: string }> {
+  const { data: team } = await admin
+    .from("teams")
+    .select("byo_runs_per_month_quota")
+    .eq("id", team_id)
+    .maybeSingle();
+  const quota = (team?.byo_runs_per_month_quota as number | undefined) ?? 0;
+  if (quota <= 0) return { error: "BYO_PLAN_REQUIRED" };
+
+  const ym = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const { data: usage } = await admin
+    .from("byo_usage_monthly")
+    .select("runs_used")
+    .eq("team_id", team_id)
+    .eq("year_month", ym)
+    .maybeSingle();
+  const used = (usage?.runs_used as number | undefined) ?? 0;
+  if (used >= quota) return { error: "BYO_QUOTA_EXCEEDED" };
+  return { ok: true };
+}
+
+function buildSystemPrompt(role: string, subject: Subject): string {
   const persona = ROLE_PERSONAS[role];
-  const opp = claim.opportunities;
+  const subjectLabel =
+    subject.kind === "claim"        ? "claimed opportunity" :
+    subject.kind === "user_idea"    ? "user-submitted idea" :
+                                      "user-submitted project";
+  const briefHint = subject.kind === "claim"
+    ? "- Call `read_opportunity_brief` first if you need the long-form briefing, gap, play, market, timing, or build path."
+    : "- This subject was submitted by the founder, not from the catalogue. `read_opportunity_brief` will return a stub — work from the context above and external signals.";
   return [
-    `You are the ${persona.name} for the startup idea "${opp.title}".`,
+    `You are the ${persona.name} for the ${subjectLabel} "${subject.title}".`,
     "",
-    `Mission: ${persona.mission(claim)}`,
+    `Mission: ${persona.mission(subject)}`,
     "",
-    `Opportunity context (anchor every recommendation to these facts):`,
-    `- One-liner: ${opp.one_liner}`,
-    `- Audience: ${opp.audience} · Industry: ${opp.industry} · Niche: ${opp.niche ?? opp.industry}`,
-    `- Business model: ${opp.model_type} · Distribution: ${opp.distribution_play}`,
-    `- Founder path: ${opp.founder_path} · Capital: ${opp.starting_capital} · Launch window: ${opp.time_to_launch}`,
-    `- Difficulty: ${opp.difficulty} · Demand trend: ${opp.demand_trend}`,
+    `Context (anchor every recommendation to these facts):`,
+    `- One-liner: ${subject.one_liner}`,
+    `- Audience: ${subject.audience} · Industry: ${subject.industry} · Niche: ${subject.niche ?? subject.industry}`,
+    `- Business model: ${subject.model_type} · Distribution: ${subject.distribution_play}`,
+    `- Founder path: ${subject.founder_path} · Capital: ${subject.starting_capital} · Launch window: ${subject.time_to_launch}`,
+    `- Difficulty: ${subject.difficulty} · Demand trend: ${subject.demand_trend}`,
     "",
     "Tool use:",
-    "- Call `read_opportunity_brief` first if you need the long-form briefing, gap, play, market, timing, or build path.",
-    "- Call `read_signals` to see cited research already collected.",
+    briefHint,
+    "- Call `read_signals` to see cited research already collected (catalogue subjects only).",
     "- Call `web_search` for fresh external info — only when internal context is insufficient.",
     "- Call `fetch_url` to read a specific source web_search surfaced.",
     "- Call `save_note` to record explicit handoffs to the other agents or to bookmark a finding.",
@@ -236,18 +370,18 @@ async function runAgentLoop(args: {
   anthropicKey: string;
   agent_role: AgentRole;
   prompt: string;
-  claim: ClaimShape;
+  subject: Subject;
   // @ts-expect-error — Supabase service-role client typing is fine at runtime
   admin: ReturnType<typeof createClient>;
 }): Promise<LoopResult> {
   const anthropic = new Anthropic({ apiKey: args.anthropicKey });
-  const systemPrompt = buildSystemPrompt(args.agent_role, args.claim);
+  const systemPrompt = buildSystemPrompt(args.agent_role, args.subject);
   // @ts-expect-error — Deno global at runtime
   const env = Deno.env;
   const toolCtx: ToolContext = {
-    claim_id: args.claim.id,
-    opportunity_id: args.claim.opportunity_id,
-    opportunity_slug: args.claim.opportunities.slug,
+    claim_id: args.subject.kind === "claim" ? args.subject.id : null,
+    opportunity_id: args.subject.opportunity_id,
+    opportunity_slug: args.subject.opportunity_slug,
     admin: args.admin,
     env,
   };

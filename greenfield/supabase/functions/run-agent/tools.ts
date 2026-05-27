@@ -25,9 +25,11 @@ const TOOL_TIMEOUT_MS = 15_000;
 const MAX_URL_BYTES   = 60_000;       // truncate fetch_url responses
 
 export type ToolContext = {
-  claim_id: string;
-  opportunity_id: string;
-  opportunity_slug: string;
+  /** Null when the subject is a BYO idea/project (catalogue-only field). */
+  claim_id: string | null;
+  /** Null for BYO subjects — read_opportunity_brief / read_signals stub out. */
+  opportunity_id: string | null;
+  opportunity_slug: string | null;
   admin: SupabaseClient;
   // @ts-expect-error — Deno global at runtime
   env: typeof Deno.env;
@@ -53,6 +55,12 @@ export const TOOLS: ToolDefinition[] = [
       "if one exists. Call this at the start of a session to ground yourself.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
     exec: async (_input, ctx) => {
+      if (!ctx.opportunity_id) {
+        return {
+          stub: true,
+          note: "This subject is a user-submitted idea or project, not a catalogue opportunity. Work from the system-prompt context and external signals.",
+        };
+      }
       const { data: opp, error: oppErr } = await ctx.admin
         .from("opportunities")
         .select(
@@ -88,6 +96,13 @@ export const TOOLS: ToolDefinition[] = [
       additionalProperties: false,
     },
     exec: async (input, ctx) => {
+      if (!ctx.opportunity_id) {
+        return {
+          stub: true,
+          signals: [],
+          note: "No cited signals for user-submitted subjects. Use web_search for fresh sources.",
+        };
+      }
       const limit = Math.min(Number(input.limit ?? 10), 50);
       const { data, error } = await ctx.admin
         .from("opportunity_signals")
