@@ -115,7 +115,10 @@ export type AgentToolCall = {
 
 export type AgentRun = {
   id: string;
-  claim_id: string;
+  /** Exactly one of claim_id, user_idea_id, or user_project_id is non-null. */
+  claim_id: string | null;
+  user_idea_id?: string | null;
+  user_project_id?: string | null;
   agent_role: "research" | "gtm" | "sales" | "marketing" | "engineering";
   status: AgentRunStatus;
   prompt: string;
@@ -176,6 +179,90 @@ export type Profile = {
 };
 
 export type SavedRow = { user_id: string; opportunity_id: string; created_at: string };
+
+/**
+ * Shared shape across user_ideas / user_projects — the minimum set of context
+ * fields the agent persona builder needs. Both BYO entities and ClaimedIdea
+ * satisfy this so `buildAgentTeam` works for all three.
+ */
+export type AgentSubjectContext = {
+  title: string;
+  one_liner: string;
+  audience: string | null;
+  industry: string | null;
+  niche: string | null;
+  model_type: string | null;
+  distribution_play: string | null;
+  demand_trend: string | null;
+  founder_path: string | null;
+  starting_capital: string | null;
+  time_to_launch: string | null;
+};
+
+export type UserIdea = {
+  id: string;
+  team_id: string;
+  created_by: string;
+
+  title: string;
+  one_liner: string;
+
+  the_gap: string | null;
+  the_play: string | null;
+  market_size_summary: string | null;
+  timing_rationale: string | null;
+  build_path: string | null;
+
+  model_type: string | null;
+  audience: string | null;
+  industry: string | null;
+  niche: string | null;
+  founder_path: string | null;
+  starting_capital: string | null;
+  time_to_launch: string | null;
+  distribution_play: string | null;
+  demand_trend: string | null;
+
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProjectStage = "prototype" | "live" | "scaling";
+
+export type UserProject = {
+  id: string;
+  team_id: string;
+  created_by: string;
+
+  title: string;
+  summary: string;
+  stage: ProjectStage;
+
+  repo_url: string | null;
+  deploy_url: string | null;
+  current_metrics: Record<string, unknown>;
+  build_brief_md: string | null;
+
+  model_type: string | null;
+  audience: string | null;
+  industry: string | null;
+  niche: string | null;
+  founder_path: string | null;
+  starting_capital: string | null;
+  time_to_launch: string | null;
+  distribution_play: string | null;
+  demand_trend: string | null;
+
+  created_at: string;
+  updated_at: string;
+};
+
+export type ByoUsageRow = {
+  team_id: string;
+  year_month: string;
+  runs_used: number;
+  updated_at: string;
+};
 
 export type BuildBrief = {
   opportunity_id: string;

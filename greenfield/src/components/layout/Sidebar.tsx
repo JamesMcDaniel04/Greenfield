@@ -1,7 +1,9 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
-  Bookmark, Bot, Code2, Compass, LayoutGrid, LogOut, Mail, Rocket, ShieldCheck, Sparkles, User, Users, Workflow,
+  Bookmark, Bot, Code2, Compass, LayoutGrid, Lightbulb, LogOut, Mail, Rocket, ShieldCheck, Sparkles, User, Users, Workflow,
 } from "lucide-react";
+
+import { TIER_BY_PLAN } from "@/lib/pricing";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -11,6 +13,8 @@ export default function Sidebar() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const isStudio = profile?.plan === "venture_studio" || profile?.plan === "university";
+  const plan = profile?.plan ?? "scout";
+  const byoUnlocked = (TIER_BY_PLAN[plan]?.byo_runs_per_month_quota ?? 0) > 0;
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-border bg-card/60">
@@ -34,6 +38,17 @@ export default function Sidebar() {
           <Item to="/workflows" icon={<Workflow className="h-4 w-4" />}>Workflows</Item>
           {isStudio && (
             <Item to="/team" icon={<Users className="h-4 w-4" />}>Team</Item>
+          )}
+        </Section>
+
+        <Section label="Your work">
+          {byoUnlocked ? (
+            <>
+              <Item to="/my-ideas" icon={<Lightbulb className="h-4 w-4" />}>My Ideas</Item>
+              <Item to="/my-projects" icon={<Rocket className="h-4 w-4" />}>My Projects</Item>
+            </>
+          ) : (
+            <Item to="/pricing" icon={<Lightbulb className="h-4 w-4" />}>Unlock BYO</Item>
           )}
         </Section>
 

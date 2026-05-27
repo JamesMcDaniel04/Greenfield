@@ -19,6 +19,10 @@ import WorkflowsPage from "@/pages/WorkflowsPage";
 import WorkflowDetailPage from "@/pages/WorkflowDetailPage";
 import TeamPage from "@/pages/TeamPage";
 import DevBypassPage from "@/pages/DevBypassPage";
+import MyIdeasPage from "@/pages/MyIdeasPage";
+import MyIdeaDetailPage from "@/pages/MyIdeaDetailPage";
+import MyProjectsPage from "@/pages/MyProjectsPage";
+import MyProjectDetailPage from "@/pages/MyProjectDetailPage";
 
 export default function App() {
   return (
@@ -42,6 +46,10 @@ export default function App() {
         <Route path="/practice" element={<PracticeIdeasPage />} />
         <Route path="/opportunity/:slug" element={<OpportunityDetailPage />} />
         <Route path="/saved" element={<SavedPage />} />
+        <Route path="/my-ideas" element={<MyIdeasPage />} />
+        <Route path="/my-ideas/:id" element={<MyIdeaDetailPage />} />
+        <Route path="/my-projects" element={<MyProjectsPage />} />
+        <Route path="/my-projects/:id" element={<MyProjectDetailPage />} />
         <Route path="/agents" element={<AgentsPage />} />
         <Route path="/workflows" element={<WorkflowsPage />} />
         <Route path="/workflows/:slug" element={<WorkflowDetailPage />} />
