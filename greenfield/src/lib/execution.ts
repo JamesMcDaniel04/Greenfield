@@ -1,6 +1,6 @@
 import type { Opportunity } from "@/lib/types";
 
-export type AgentRole = "research" | "gtm" | "sales" | "marketing" | "engineering";
+export type AgentRole = "research" | "gtm" | "sales" | "marketing" | "engineering" | "mentor" | "evaluator";
 
 export type ClaimedIdea = {
   /** Supabase idea_claims.id when persisted; absent in demo/localStorage mode. */
@@ -52,7 +52,7 @@ export type WorkflowTemplate = {
   slug: string;
   title: string;
   one_liner: string;
-  category: "Research" | "GTM" | "Sales" | "Marketing" | "Engineering";
+  category: "Research" | "GTM" | "Sales" | "Marketing" | "Engineering" | "Mentor" | "Evaluator";
   stage: "Foundation" | "Launch" | "Revenue" | "Retention";
   primary_agent: AgentRole;
   support_agents: AgentRole[];
@@ -87,7 +87,16 @@ export type WorkflowGuide = {
   body: string;
 };
 
-export const AGENT_ROLE_ORDER: AgentRole[] = ["research", "gtm", "sales", "marketing", "engineering"];
+export const AGENT_ROLE_ORDER: AgentRole[] = ["research", "gtm", "sales", "marketing", "engineering", "mentor", "evaluator"];
+
+/**
+ * Roles that operate on catalogue claims and BYO ideas/projects. The Career
+ * surface (mentor + evaluator) is intentionally excluded from this list —
+ * those roles are tied to submission subjects and surface only on /career.
+ */
+export const FOUNDER_AGENT_ROLES: AgentRole[] = ["research", "gtm", "sales", "marketing", "engineering"];
+
+export const CAREER_AGENT_ROLES: AgentRole[] = ["mentor", "evaluator"];
 
 export const AGENT_ROLE_LABEL: Record<AgentRole, string> = {
   research: "Research",
@@ -95,6 +104,8 @@ export const AGENT_ROLE_LABEL: Record<AgentRole, string> = {
   sales: "Sales",
   marketing: "Marketing",
   engineering: "Engineering",
+  mentor: "Mentor",
+  evaluator: "Evaluator",
 };
 
 export function claimFromOpportunity(opp: Opportunity): ClaimedIdea {

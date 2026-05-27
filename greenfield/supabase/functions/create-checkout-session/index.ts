@@ -2,15 +2,16 @@
  * create-checkout-session — Supabase Edge Function (Deno)
  *
  * POST /functions/v1/create-checkout-session
- * Body: { plan: 'entrepreneur' | 'venture_studio' }
+ * Body: { plan: 'entrepreneur' | 'builder' | 'career' | 'venture_studio' }
  *
- * Auth: caller's JWT. Resolves the caller's owned team (personal team for
- * Entrepreneur; the team they own for Venture Studio). Creates a Stripe
+ * Auth: caller's JWT. Resolves the caller's owned team. Creates a Stripe
  * Checkout Session for the configured annual price, returns { url }.
  *
  * Required env:
  *  - STRIPE_SECRET_KEY                 (sk_live_... or sk_test_...)
  *  - STRIPE_PRICE_ENTREPRENEUR         (price_... — annual)
+ *  - STRIPE_PRICE_BUILDER              (price_... — annual)
+ *  - STRIPE_PRICE_CAREER               (price_... — annual)
  *  - STRIPE_PRICE_VENTURE_STUDIO       (price_... — annual)
  *  - APP_URL                           (e.g. https://greenfield.app) — success/cancel returns
  */
@@ -24,7 +25,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Plan = "entrepreneur" | "venture_studio";
+type Plan = "entrepreneur" | "builder" | "career" | "venture_studio";
+const VALID_PLANS = new Set<Plan>(["entrepreneur", "builder", "career", "venture_studio"]);
 
 // @ts-expect-error — Deno global at runtime
 Deno.serve(async (req: Request) => {
@@ -44,6 +46,10 @@ Deno.serve(async (req: Request) => {
     // @ts-expect-error
     entrepreneur: Deno.env.get("STRIPE_PRICE_ENTREPRENEUR")!,
     // @ts-expect-error
+    builder: Deno.env.get("STRIPE_PRICE_BUILDER")!,
+    // @ts-expect-error
+    career: Deno.env.get("STRIPE_PRICE_CAREER")!,
+    // @ts-expect-error
     venture_studio: Deno.env.get("STRIPE_PRICE_VENTURE_STUDIO")!,
   };
 
@@ -62,8 +68,8 @@ Deno.serve(async (req: Request) => {
   } catch {
     return json({ error: "INVALID_INPUT", details: "Body must be JSON" }, 400);
   }
-  if (body.plan !== "entrepreneur" && body.plan !== "venture_studio") {
-    return json({ error: "INVALID_INPUT", details: "plan must be entrepreneur or venture_studio" }, 400);
+  if (!body.plan || !VALID_PLANS.has(body.plan)) {
+    return json({ error: "INVALID_INPUT", details: "plan must be entrepreneur | builder | career | venture_studio" }, 400);
   }
   const priceId = priceByPlan[body.plan];
   if (!priceId) {

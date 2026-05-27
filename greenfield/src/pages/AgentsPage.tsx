@@ -32,6 +32,8 @@ const ROLE_ICON: Record<AgentRole, typeof Bot> = {
   sales: Rocket,
   marketing: Megaphone,
   engineering: Wrench,
+  mentor: Bot,
+  evaluator: Bot,
 };
 
 const ROLE_TONE: Record<AgentRole, string> = {
@@ -40,6 +42,8 @@ const ROLE_TONE: Record<AgentRole, string> = {
   sales: "border-accent/30 bg-accent/[0.08] text-foreground",
   marketing: "border-emerald-800/15 bg-emerald-900/[0.04] text-emerald-950",
   engineering: "border-slate-400/30 bg-slate-100 text-slate-800",
+  mentor: "border-muted bg-muted text-muted-foreground",
+  evaluator: "border-muted bg-muted text-muted-foreground",
 };
 
 export default function AgentsPage() {
@@ -198,7 +202,7 @@ export default function AgentsPage() {
         )}
 
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {AGENT_BASES.map((agent) => {
+          {AGENT_BASES.filter((agent) => agent.role !== "mentor" && agent.role !== "evaluator").map((agent) => {
             const Icon = ROLE_ICON[agent.role];
             return (
               <div key={agent.role} className="rounded-2xl border bg-card p-4 shadow-sm">

@@ -459,6 +459,9 @@ async function resolveSubmissionSubject(
 }
 
 function buildSystemPrompt(role: string, subject: Subject): string {
+  if (subject.kind === "submission") {
+    return buildCareerSystemPrompt(role, subject);
+  }
   const persona = ROLE_PERSONAS[role];
   const subjectLabel =
     subject.kind === "claim"        ? "claimed opportunity" :
@@ -499,6 +502,96 @@ function buildSystemPrompt(role: string, subject: Subject): string {
   ].join("\n");
 }
 
+function buildCareerSystemPrompt(role: string, subject: Subject): string {
+  const c = subject.career!;
+  if (role === "mentor") {
+    return [
+      `You are the Mentor Agent for the ${c.track_title} track. The learner is working on **${c.project_title}** (hireable skill: ${c.hireable_skill}).`,
+      "",
+      "Their goal is to understand and ship, not to paste your code.",
+      "",
+      "Hard rules:",
+      "- Never write working code blocks longer than 6 lines.",
+      "- Never paste a full solution to any rubric criterion.",
+      "- If the learner asks \"write me X\", redirect: \"What approach are you considering, and what tradeoff does it close?\"",
+      "- When they share an answer, react to the *reasoning*, not the surface.",
+      "- Point at named concepts, libraries, or docs they should explore — don't read the docs for them.",
+      "",
+      `Their current submission state (attempt ${c.attempt_no}, status: ${c.status}):`,
+      `- Repo: ${c.repo_url ?? "(not submitted yet)"}`,
+      `- Deploy: ${c.deploy_url ?? "(not submitted yet)"}`,
+      `- Demo: ${c.demo_url ?? "(not submitted yet)"}`,
+      "",
+      "Their answers to the anti-cheat questions so far:",
+      "```json",
+      JSON.stringify(c.written_answers ?? {}, null, 2),
+      "```",
+      "",
+      "Project rubric (READ-ONLY context — never paraphrase a criterion as a solution):",
+      "```json",
+      JSON.stringify(c.rubric, null, 2),
+      "```",
+      "",
+      "Anti-cheat questions for this project:",
+      "```json",
+      JSON.stringify(c.anti_cheat_questions, null, 2),
+      "```",
+      "",
+      "Tool use:",
+      "- Call `read_project_brief` to load the starter brief.",
+      "- Call `read_submission` to refresh the current artifact URLs + answers.",
+      "- Call `read_rubric` for a clean view of the rubric and anti-cheat questions.",
+      "- Call `web_search` / `fetch_url` to point the learner at named resources.",
+      "",
+      "Output: short, Socratic, and specific. End every response with one concrete next thing the learner should try (concept-level, not code).",
+    ].join("\n");
+  }
+  // evaluator
+  return [
+    `You are the Evaluator Agent for the ${c.track_title} track. Score the learner's submission for **${c.project_title}** (skill: ${c.hireable_skill}) strictly against the rubric.`,
+    "",
+    "Hard rules:",
+    "- Cite the artifacts. Don't hand-wave.",
+    "- Flag AI-generated tells (generic answers, copy-pasted explanations, no specifics).",
+    "- A criterion passes only when its evidence is concrete and present in the artifacts.",
+    "",
+    `Submission (attempt ${c.attempt_no}):`,
+    `- Repo: ${c.repo_url ?? "(missing)"}`,
+    `- Deploy: ${c.deploy_url ?? "(missing)"}`,
+    `- Demo: ${c.demo_url ?? "(missing)"}`,
+    "",
+    "Learner's written answers:",
+    "```json",
+    JSON.stringify(c.written_answers ?? {}, null, 2),
+    "```",
+    "",
+    "Rubric:",
+    "```json",
+    JSON.stringify(c.rubric, null, 2),
+    "```",
+    "",
+    "Anti-cheat questions (their answers should be specific to this project, not generic):",
+    "```json",
+    JSON.stringify(c.anti_cheat_questions, null, 2),
+    "```",
+    "",
+    "Tool use:",
+    "- Call `read_project_brief` for the canonical brief.",
+    "- Call `read_submission` to re-read artifact URLs + answers.",
+    "- Call `fetch_url` to inspect repo READMEs and the deployed app.",
+    "",
+    "Output: a single JSON object — and **nothing else** — in this exact shape:",
+    "```json",
+    "{",
+    "  \"rubric_scores\": [{\"criterion_id\": \"<id>\", \"score\": <0-5>, \"max\": <max>, \"notes\": \"<one sentence, specific>\"}],",
+    "  \"overall_pass\": <true|false>,",
+    "  \"feedback_md\": \"<markdown feedback for the learner, 150-400 words>\"",
+    "}",
+    "```",
+    "`overall_pass` is true only if every criterion meets its `pass_threshold`.",
+  ].join("\n");
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // The Anthropic tool-use loop
 // ─────────────────────────────────────────────────────────────────────────
@@ -526,6 +619,7 @@ async function runAgentLoop(args: {
     claim_id: args.subject.kind === "claim" ? args.subject.id : null,
     opportunity_id: args.subject.opportunity_id,
     opportunity_slug: args.subject.opportunity_slug,
+    submission_id: args.subject.kind === "submission" ? args.subject.id : null,
     admin: args.admin,
     env,
   };

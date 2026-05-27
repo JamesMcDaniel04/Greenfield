@@ -9,6 +9,18 @@ import {
 type AgentBase = Omit<AgentPlan, "mission" | "instructions" | "handoff" | "success_metric" | "starter_prompt">;
 
 const BASE_TOOLS: Record<AgentRole, AgentTool[]> = {
+  mentor: [
+    { name: "Project brief", purpose: "Re-read the canonical brief before answering." },
+    { name: "Submission state", purpose: "See the learner's current artifacts and answers." },
+    { name: "Rubric (read-only)", purpose: "Anchor feedback to what will actually be graded." },
+    { name: "Curated references", purpose: "Point at named docs and concepts; never paste solutions." },
+  ],
+  evaluator: [
+    { name: "Project brief", purpose: "Verify the submission addresses the stated scope." },
+    { name: "Submission artifacts", purpose: "Inspect repo / deploy / demo before scoring." },
+    { name: "Rubric (canonical)", purpose: "Score each criterion against its pass threshold." },
+    { name: "Web fetch", purpose: "Pull READMEs and live URLs to ground each score in evidence." },
+  ],
   research: [
     { name: "Industry report search", purpose: "Pull current market sizing, growth rates, and segmentation from Gartner / IDC / McKinsey / Forrester / Statista." },
     { name: "Competitor landscape scan", purpose: "Map direct, adjacent, and substitute competitors with positioning and recent product moves." },
@@ -42,6 +54,24 @@ const BASE_TOOLS: Record<AgentRole, AgentTool[]> = {
 };
 
 export const AGENT_BASES: AgentBase[] = [
+  {
+    role: "mentor",
+    name: "Mentor Agent",
+    tagline: "Socratic helper for Career-track learners. Never paste solutions.",
+    summary: "Helps the learner understand and ship. Points at concepts, asks for reasoning, refuses to hand over working code.",
+    allowed_tools: BASE_TOOLS.mentor,
+    deliverables: ["Concept guidance", "Reasoning prompts", "Curated references"],
+    workflow_slugs: [],
+  },
+  {
+    role: "evaluator",
+    name: "Evaluator Agent",
+    tagline: "Grades Career submissions against the rubric — strictly, with citations.",
+    summary: "Inspects the learner's repo, deploy, and answers and returns a structured pass/fail per criterion with feedback.",
+    allowed_tools: BASE_TOOLS.evaluator,
+    deliverables: ["Rubric scores", "Pass/fail decision", "Specific written feedback"],
+    workflow_slugs: [],
+  },
   {
     role: "research",
     name: "Research Agent",
@@ -98,6 +128,11 @@ function nicheLabel(claim: ClaimedIdea) {
 }
 
 function buildMission(role: AgentRole, claim: ClaimedIdea): string {
+  // Mentor + evaluator are Career-only and never reach this builder, but the
+  // exhaustive role union forces us to handle them. Return an inert string.
+  if (role === "mentor" || role === "evaluator") {
+    return `${role === "mentor" ? "Mentor" : "Evaluator"} agents are used inside the Career track, not on claimed opportunities.`;
+  }
   if (role === "research") {
     return `Build the upstream evidence base for ${claim.title}: who else operates in ${nicheLabel(claim).toLowerCase()}, what has been acquired or merged in the last 24 months, and which industry signals justify acting now.`;
   }
@@ -116,6 +151,9 @@ function buildMission(role: AgentRole, claim: ClaimedIdea): string {
 }
 
 function buildInstructions(role: AgentRole, claim: ClaimedIdea): string[] {
+  if (role === "mentor" || role === "evaluator") {
+    return ["Used only on Career-track submissions, not on claimed opportunities."];
+  }
   const shared = [
     `Anchor every decision to the claimed opportunity: ${claim.title}.`,
     `Keep the plan consistent with a ${claim.founder_path.toLowerCase()} path, ${claim.starting_capital.toLowerCase()} starting capital, and a ${claim.time_to_launch.toLowerCase()} launch window.`,
@@ -166,6 +204,9 @@ function buildInstructions(role: AgentRole, claim: ClaimedIdea): string[] {
 }
 
 function buildHandoff(role: AgentRole, claim: ClaimedIdea): string {
+  if (role === "mentor" || role === "evaluator") {
+    return "Career-track only — no handoff into the founder agent team.";
+  }
   if (role === "research") return `Hands a cited landscape, M&A read, and "where the wedge is" recommendation to GTM so positioning and pricing land in a real market.`;
   if (role === "gtm") return `Hands the chosen wedge, pricing frame, and channel priorities to Sales and Marketing so ${claim.title} launches on one message.`;
   if (role === "sales") return `Feeds live objections, pilot requests, and close blockers back to GTM and Engineering so the offer tightens every week.`;
@@ -174,6 +215,9 @@ function buildHandoff(role: AgentRole, claim: ClaimedIdea): string {
 }
 
 function buildSuccessMetric(role: AgentRole, claim: ClaimedIdea): string {
+  if (role === "mentor" || role === "evaluator") {
+    return "Career-track only — measured against submission rubric passes, not founder outcomes.";
+  }
   if (role === "research") return `A cited competitive landscape, a 24-month M&A read, and a sized opportunity that GTM can build the wedge on top of.`;
   if (role === "gtm") return `One clear ICP, one differentiated offer, and one acquisition lane the founder can run for ${claim.title} every week.`;
   if (role === "sales") return b2bMotion(claim)

@@ -11,7 +11,7 @@ import { useByoUsage } from "@/lib/byoUsage";
 import { useUserProject } from "@/lib/userProjects";
 import { useByoAgentRuns, useRunByoAgent } from "@/lib/byoAgentRuns";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { AGENT_ROLE_LABEL, AGENT_ROLE_ORDER, type AgentRole } from "@/lib/execution";
+import { AGENT_ROLE_LABEL, FOUNDER_AGENT_ROLES, type AgentRole } from "@/lib/execution";
 
 export default function MyProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -88,7 +88,7 @@ export default function MyProjectDetailPage() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          {AGENT_ROLE_ORDER.map((r) => (
+          {FOUNDER_AGENT_ROLES.map((r) => (
             <Button
               key={r}
               size="sm"

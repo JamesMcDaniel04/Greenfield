@@ -30,6 +30,8 @@ export type ToolContext = {
   /** Null for BYO subjects — read_opportunity_brief / read_signals stub out. */
   opportunity_id: string | null;
   opportunity_slug: string | null;
+  /** Set when the subject is a Career submission. Enables the career tools. */
+  submission_id: string | null;
   admin: SupabaseClient;
   // @ts-expect-error — Deno global at runtime
   env: typeof Deno.env;
@@ -251,7 +253,83 @@ export const TOOLS: ToolDefinition[] = [
 // addition to the shared set above.
 // ─────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────
+// Career tools — read-only views of the submission, project brief, and rubric.
+// Shared between mentor and evaluator. Each requires ctx.submission_id.
+// ─────────────────────────────────────────────────────────────────────────
+
+const CAREER_TOOLS: ToolDefinition[] = [
+  {
+    name: "read_project_brief",
+    description:
+      "Read the canonical project brief (Markdown) for the project the learner " +
+      "is working on. Use to ground feedback in the project's stated scope.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    exec: async (_input, ctx) => {
+      if (!ctx.submission_id) return { error: "read_project_brief requires a submission subject" };
+      const { data, error } = await ctx.admin
+        .from("career_submissions")
+        .select("project_slug, career_projects!inner(title, hireable_skill, starter_brief_md)")
+        .eq("id", ctx.submission_id)
+        .maybeSingle();
+      if (error || !data) return { error: error?.message ?? "submission not found" };
+      const p = data.career_projects as Record<string, unknown>;
+      return {
+        project_slug: data.project_slug,
+        title: p.title,
+        hireable_skill: p.hireable_skill,
+        starter_brief_md: p.starter_brief_md ?? null,
+      };
+    },
+  },
+  {
+    name: "read_submission",
+    description:
+      "Read the learner's current submission: artifact URLs (repo / deploy / demo) " +
+      "and written answers to the anti-cheat questions. Use to ground feedback in " +
+      "what they actually submitted, not a guess.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    exec: async (_input, ctx) => {
+      if (!ctx.submission_id) return { error: "read_submission requires a submission subject" };
+      const { data, error } = await ctx.admin
+        .from("career_submissions")
+        .select("id, status, attempt_no, repo_url, deploy_url, demo_url, written_answers, submitted_at, graded_at")
+        .eq("id", ctx.submission_id)
+        .maybeSingle();
+      if (error || !data) return { error: error?.message ?? "submission not found" };
+      return data;
+    },
+  },
+  {
+    name: "read_rubric",
+    description:
+      "Return the project's rubric and anti-cheat questions in raw JSON. The " +
+      "rubric is what the evaluator scores against; the anti-cheat questions " +
+      "are what the learner had to answer in their own words.",
+    input_schema: { type: "object", properties: {}, additionalProperties: false },
+    exec: async (_input, ctx) => {
+      if (!ctx.submission_id) return { error: "read_rubric requires a submission subject" };
+      const { data, error } = await ctx.admin
+        .from("career_submissions")
+        .select("career_projects!inner(slug, rubric, anti_cheat_questions, required_artifacts)")
+        .eq("id", ctx.submission_id)
+        .maybeSingle();
+      if (error || !data) return { error: error?.message ?? "submission not found" };
+      const p = data.career_projects as Record<string, unknown>;
+      return {
+        project_slug: p.slug,
+        rubric: p.rubric ?? [],
+        anti_cheat_questions: p.anti_cheat_questions ?? [],
+        required_artifacts: p.required_artifacts ?? [],
+      };
+    },
+  },
+];
+
 export const ROLE_TOOLS: Record<string, ToolDefinition[]> = {
+  mentor: CAREER_TOOLS,
+  evaluator: CAREER_TOOLS,
+
   // ── GTM: competitor scouting ────────────────────────────────────────
   gtm: [{
     name: "find_competitors",

@@ -70,7 +70,7 @@ export type Opportunity = {
   updated_at: string;
 };
 
-export type PlanTier = "scout" | "entrepreneur" | "builder" | "venture_studio" | "university";
+export type PlanTier = "scout" | "entrepreneur" | "builder" | "career" | "venture_studio" | "university";
 
 export type Team = {
   id: string;
@@ -119,7 +119,8 @@ export type AgentRun = {
   claim_id: string | null;
   user_idea_id?: string | null;
   user_project_id?: string | null;
-  agent_role: "research" | "gtm" | "sales" | "marketing" | "engineering";
+  submission_id?: string | null;
+  agent_role: "research" | "gtm" | "sales" | "marketing" | "engineering" | "mentor" | "evaluator";
   status: AgentRunStatus;
   prompt: string;
   output_markdown: string | null;
@@ -139,7 +140,7 @@ export type WorkflowStep = {
   id: string;
   workflow_run_id: string;
   ordinal: number;
-  owner_role: "research" | "gtm" | "sales" | "marketing" | "engineering";
+  owner_role: "research" | "gtm" | "sales" | "marketing" | "engineering" | "mentor" | "evaluator";
   title: string;
   description: string;
   status: WorkflowStepStatus;
@@ -258,6 +259,130 @@ export type UserProject = {
 };
 
 export type ByoUsageRow = {
+  team_id: string;
+  year_month: string;
+  runs_used: number;
+  updated_at: string;
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// Career: tracks, projects, enrollments, submissions, evaluations, portfolio
+// ─────────────────────────────────────────────────────────────────────────
+
+export type RubricCriterion = {
+  id: string;
+  criterion: string;
+  weight: number;
+  pass_threshold: number;
+  max: number;
+};
+
+export type RubricScore = {
+  criterion_id: string;
+  score: number;
+  max: number;
+  notes?: string;
+};
+
+export type AntiCheatQuestion = {
+  id: string;
+  prompt: string;
+  min_words: number;
+};
+
+export type CareerTrack = {
+  slug: string;
+  title: string;
+  target_role: string;
+  summary: string;
+  hero_promise: string;
+  est_duration: string;
+  project_count: number;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type CareerProject = {
+  slug: string;
+  track_slug: string;
+  ordinal: number;
+  title: string;
+  summary: string;
+  hireable_skill: string;
+  required_artifacts: string[];
+  anti_cheat_questions: AntiCheatQuestion[];
+  rubric: RubricCriterion[];
+  starter_brief_md: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type CareerEnrollmentStatus = "active" | "completed" | "paused" | "withdrawn";
+
+export type CareerEnrollment = {
+  id: string;
+  user_id: string;
+  track_slug: string;
+  started_at: string;
+  completed_at: string | null;
+  status: CareerEnrollmentStatus;
+};
+
+export type CareerSubmissionStatus =
+  | "draft"
+  | "submitted"
+  | "grading"
+  | "passed"
+  | "needs_revision"
+  | "failed"
+  | "withdrawn";
+
+export type CareerSubmission = {
+  id: string;
+  enrollment_id: string;
+  project_slug: string;
+  repo_url: string | null;
+  deploy_url: string | null;
+  demo_url: string | null;
+  written_answers: Record<string, string>;
+  status: CareerSubmissionStatus;
+  attempt_no: number;
+  submitted_at: string | null;
+  graded_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type HumanReviewState = "none" | "requested" | "in_review" | "approved" | "rejected";
+
+export type CareerSubmissionEvaluation = {
+  id: string;
+  submission_id: string;
+  evaluator_agent_run_id: string | null;
+  rubric_scores: RubricScore[];
+  overall_pass: boolean;
+  model_feedback_md: string | null;
+  human_reviewer_id: string | null;
+  human_review_state: HumanReviewState;
+  human_review_notes: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+};
+
+export type CareerPortfolioProfile = {
+  user_id: string;
+  username: string;
+  headline: string | null;
+  bio: string | null;
+  is_public: boolean;
+  verified_track_slugs: string[];
+  human_verified_track_slugs: string[];
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CareerUsageRow = {
   team_id: string;
   year_month: string;
   runs_used: number;

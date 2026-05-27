@@ -21,6 +21,8 @@ export type PricingTier = {
   claims_per_year_cap?: number;
   /** Included BYO (user-submitted ideas/projects) agent runs per month. 0 means BYO is locked. */
   byo_runs_per_month_quota: number;
+  /** Included Career-track agent runs (mentor + evaluator) per month. 0 means Career is locked. */
+  career_runs_per_month_quota: number;
 };
 
 export const TIERS: PricingTier[] = [
@@ -41,6 +43,7 @@ export const TIERS: PricingTier[] = [
     seat_limit: 1,
     claims_per_week_quota: 0,
     byo_runs_per_month_quota: 0,
+    career_runs_per_month_quota: 0,
   },
   {
     plan: "entrepreneur",
