@@ -19,6 +19,8 @@ export type PricingTier = {
   claims_per_week_quota: number;
   /** Lifetime claim cap, if any (Entrepreneur is gated this way; others use weekly). */
   claims_per_year_cap?: number;
+  /** Included BYO (user-submitted ideas/projects) agent runs per month. 0 means BYO is locked. */
+  byo_runs_per_month_quota: number;
 };
 
 export const TIERS: PricingTier[] = [
@@ -38,6 +40,7 @@ export const TIERS: PricingTier[] = [
     cta: "Get instant access",
     seat_limit: 1,
     claims_per_week_quota: 0,
+    byo_runs_per_month_quota: 0,
   },
   {
     plan: "entrepreneur",
@@ -58,6 +61,26 @@ export const TIERS: PricingTier[] = [
     seat_limit: 1,
     claims_per_week_quota: 1,
     claims_per_year_cap: 1,
+    byo_runs_per_month_quota: 0,
+  },
+  {
+    plan: "builder",
+    name: "Builder",
+    priceLabel: "$497",
+    per: "/ year",
+    priceFootnote: "About $42/month",
+    tagline: "For founders bringing their own idea or project.",
+    features: [
+      "Everything in Entrepreneur",
+      "Bring your own ideas — kept private to your workspace",
+      "Bring your own in-flight projects (repo, deploy URL, current metrics)",
+      "25 BYO agent runs per month across the 5-agent team",
+      "All 5 agents — Research, GTM, Sales, Marketing, Engineering",
+    ],
+    cta: "Get instant access",
+    seat_limit: 1,
+    claims_per_week_quota: 1,
+    byo_runs_per_month_quota: 25,
   },
   {
     plan: "venture_studio",
@@ -77,6 +100,7 @@ export const TIERS: PricingTier[] = [
     cta: "Contact sales",
     seat_limit: 5,
     claims_per_week_quota: 10,
+    byo_runs_per_month_quota: 100,
   },
   {
     plan: "university",
@@ -94,6 +118,7 @@ export const TIERS: PricingTier[] = [
     cta: "Contact us",
     seat_limit: 25,
     claims_per_week_quota: 50,
+    byo_runs_per_month_quota: 200,
   },
 ];
 

@@ -70,7 +70,7 @@ export type Opportunity = {
   updated_at: string;
 };
 
-export type PlanTier = "scout" | "entrepreneur" | "venture_studio" | "university";
+export type PlanTier = "scout" | "entrepreneur" | "builder" | "venture_studio" | "university";
 
 export type Team = {
   id: string;

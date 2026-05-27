@@ -15,9 +15,9 @@ import {
 } from "@/lib/workflows";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["All", "GTM", "Sales", "Marketing", "Engineering"] as const;
+const CATEGORIES = ["All", "Research", "GTM", "Sales", "Marketing", "Engineering"] as const;
 const STAGES = ["All", "Foundation", "Launch", "Revenue", "Retention"] as const;
-const ROLES = ["all", "gtm", "sales", "marketing", "engineering"] as const;
+const ROLES = ["all", "research", "gtm", "sales", "marketing", "engineering"] as const;
 
 export default function WorkflowsPage() {
   const [searchParams] = useSearchParams();
@@ -35,7 +35,13 @@ export default function WorkflowsPage() {
 
   useEffect(() => {
     const nextRole = searchParams.get("role");
-    if (nextRole === "gtm" || nextRole === "sales" || nextRole === "marketing" || nextRole === "engineering") {
+    if (
+      nextRole === "research" ||
+      nextRole === "gtm" ||
+      nextRole === "sales" ||
+      nextRole === "marketing" ||
+      nextRole === "engineering"
+    ) {
       setRole(nextRole);
     }
   }, [searchParams]);

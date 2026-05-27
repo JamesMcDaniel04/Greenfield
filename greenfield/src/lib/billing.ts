@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
-type CheckoutPlan = "entrepreneur" | "venture_studio";
+type CheckoutPlan = "entrepreneur" | "builder" | "venture_studio";
 
 /** Kicks off Stripe Checkout for the given plan. Redirects on success. */
 export function useStartCheckout() {

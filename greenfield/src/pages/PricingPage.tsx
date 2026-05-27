@@ -37,7 +37,7 @@ export default function PricingPage() {
   }, [searchParams, setSearchParams, navigate, refreshProfile]);
 
   function startUpgrade(tier: PricingTier) {
-    if (tier.plan !== "entrepreneur" && tier.plan !== "venture_studio") return;
+    if (tier.plan !== "entrepreneur" && tier.plan !== "builder" && tier.plan !== "venture_studio") return;
     startCheckout.mutate(tier.plan);
   }
 
@@ -69,7 +69,7 @@ export default function PricingPage() {
         </div>
       )}
 
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
+      <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {SELF_SERVE_TIERS.map((tier) => (
           <TierCard
             key={tier.plan}

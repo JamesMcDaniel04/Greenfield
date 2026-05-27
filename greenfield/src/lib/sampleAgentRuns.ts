@@ -38,6 +38,49 @@ function run(
   };
 }
 
+const RESEARCH_OUTPUT = `# Landscape brief: Solo-CPA practice management (Q2 2026)
+
+## Market structure
+The solo-CPA tooling market splits cleanly into three tiers:
+- **Firm-grade PM suites** — Karbon, Canopy, Jetpack Workflow. $50–$120/seat, optimized for 5+ headcount firms.
+- **Single-purpose tools** — TaxDome (portals), Liscio (client comms), SmartVault (docs). $30–$80/seat. Most solo CPAs stack 2–3 of these.
+- **Generic SaaS glue** — Karbon-replacers running on Notion + Calendly + Dropbox. No data, but every Reddit thread mentions some variant.
+
+## Direct competitors (10 mapped)
+
+| Vendor | Positioning | Solo-CPA signal |
+|---|---|---|
+| Karbon | "Firm-grade practice mgmt" | Recent price hike triggered LinkedIn pushback (Apr 2026) |
+| Canopy | "All-in-one for accountants" | Acquired CPAcharge in 2024 — bundling payments |
+| TaxDome | "Client portal first" | Strongest solo traction; expanding into workflows |
+| Jetpack Workflow | "Recurring task templates" | Stagnant — 2 features shipped in 12 months |
+| Liscio | "Secure client messaging" | Lost ground to TaxDome's portal |
+| Financial Cents | "Project mgmt for accountants" | Mid-firm focused; weak solo onboarding |
+| Aiwyn | "AI for accounting firms" | Top-down sales motion; not solo-accessible |
+| Pixie | "Workflow automation for accountants" | UK-led, expanding to US |
+| Truss | "Practice mgmt for tax pros" | Acquired by Bill.com in 2025 — likely sunset |
+| Anchor | "Engagement letters + billing" | Adjacent — could bundle |
+
+## Recent M&A and consolidation (24-month window)
+- **Bill.com → Truss** (2025) — Bill is rolling Truss into its receivables platform; likely deprecation.
+- **Canopy → CPAcharge** (2024) — payments inside the PM stack.
+- **Thomson Reuters → SurePrep** (2024) — 1040 automation moved out of standalone reach.
+- **Caseware → Adagio** (2025) — Canadian SMB consolidation; signal that mid-firm PM is acquiring solo-focused features.
+
+**Read:** the solo end of the market is being abandoned by the consolidators (Bill, Canopy, Thomson Reuters) as they chase mid-firm ARPU. The wedge is real.
+
+## Industry sizing
+- **US public-practice CPAs:** ~89k solos (AICPA member roll, 2025).
+- **Tax-prep software TAM (US):** $4.7B in 2025 (IDC), 7.2% CAGR.
+- **Practice-mgmt sub-segment:** $620M (Gartner segmentation, 2025) — solo slice estimated at $140M.
+- **Forrester** flagged "AI-assisted workflow automation in accounting" as a top-3 2026 SMB-software trend.
+
+## Handoffs
+- **GTM:** Karbon-displacement is the only positioning with current demand evidence — anchor the wedge there.
+- **Sales:** prospect against firms that flagged Karbon's April 2026 price hike. Public LinkedIn signal — pullable.
+- **Marketing:** mention "abandoned by the consolidators" implicitly; do not name Bill.com / Canopy in copy. Cite IDC + AICPA numbers in the founder post.
+- **Engineering:** TaxDome is the toughest portal competitor — match magic-link UX before differentiating elsewhere.`;
+
 const GTM_OUTPUT = `# Wedge plan: Solo CPAs running 1040 engagements out of multi-tool sprawl
 
 ## ICP (one buyer)
@@ -185,6 +228,32 @@ portal_tokens (token, engagement_id, expires_at)
 - **GTM:** instrumentation above gives you the channel scorecard inputs by week 2.`;
 
 export const SAMPLE_AGENT_RUNS: AgentRun[] = [
+  run(
+    "research",
+    "Map the competitive landscape, recent acquisitions, and industry sizing for solo-CPA practice management.",
+    RESEARCH_OUTPUT,
+    [
+      {
+        name: "landscape_competitors",
+        input: { space: "solo CPA practice management software", depth: 12 },
+        result: { candidates: 10 },
+        duration_ms: 2_140,
+      },
+      {
+        name: "find_acquisitions",
+        input: { sector: "accounting practice management", since_year: 2024 },
+        result: { deals: 4 },
+        duration_ms: 1_780,
+      },
+      {
+        name: "find_industry_reports",
+        input: { topic: "tax practice management software US", fetch_top: true },
+        result: { reports: 6, fetched_top: true },
+        duration_ms: 3_220,
+      },
+    ],
+    44,
+  ),
   run(
     "gtm",
     "Give me the first wedge plan: ICP, offer, and one acquisition lane I can run this week.",

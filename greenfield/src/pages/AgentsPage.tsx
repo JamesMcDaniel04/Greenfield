@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Copy,
   Megaphone,
+  Microscope,
   Play,
   Rocket,
   Search,
@@ -26,6 +27,7 @@ import { recommendedWorkflowsForClaim } from "@/lib/workflows";
 import { cn } from "@/lib/utils";
 
 const ROLE_ICON: Record<AgentRole, typeof Bot> = {
+  research: Microscope,
   gtm: Target,
   sales: Rocket,
   marketing: Megaphone,
@@ -33,6 +35,7 @@ const ROLE_ICON: Record<AgentRole, typeof Bot> = {
 };
 
 const ROLE_TONE: Record<AgentRole, string> = {
+  research: "border-teal-500/25 bg-teal-50 text-teal-900",
   gtm: "border-primary/20 bg-primary/[0.05] text-primary",
   sales: "border-accent/30 bg-accent/[0.08] text-foreground",
   marketing: "border-emerald-800/15 bg-emerald-900/[0.04] text-emerald-950",
@@ -47,11 +50,17 @@ export default function AgentsPage() {
     activeClaimSlug,
     setActiveClaim,
   } = useClaimedIdeas();
-  const [selectedRole, setSelectedRole] = useState<AgentRole>("gtm");
+  const [selectedRole, setSelectedRole] = useState<AgentRole>("research");
 
   useEffect(() => {
     const nextRole = searchParams.get("role");
-    if (nextRole === "gtm" || nextRole === "sales" || nextRole === "marketing" || nextRole === "engineering") {
+    if (
+      nextRole === "research" ||
+      nextRole === "gtm" ||
+      nextRole === "sales" ||
+      nextRole === "marketing" ||
+      nextRole === "engineering"
+    ) {
       setSelectedRole(nextRole);
     }
   }, [searchParams]);

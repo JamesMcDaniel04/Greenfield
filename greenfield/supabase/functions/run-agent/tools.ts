@@ -463,6 +463,128 @@ export const ROLE_TOOLS: Record<string, ToolDefinition[]> = {
     },
   }],
 
+  // ── Research: M&A, industry reports, deep competitor landscape ───────
+  research: [
+    {
+      name: "landscape_competitors",
+      description:
+        "Build a wide competitor landscape (10–15 candidates) with positioning notes. " +
+        "Wider than find_competitors. Returns de-duplicated by host, with title, " +
+        "URL, and a one-line positioning snippet. Use when scoping a category, not when " +
+        "pricing against 3–5 named rivals.",
+      input_schema: {
+        type: "object",
+        properties: {
+          space: { type: "string", minLength: 2, maxLength: 200 },
+          depth: { type: "integer", minimum: 5, maximum: 20, default: 12 },
+        },
+        required: ["space"],
+        additionalProperties: false,
+      },
+      exec: async (input, ctx) => {
+        const space = String(input.space ?? "").trim();
+        if (!space) return { error: "space required" };
+        const depth = Math.min(Number(input.depth ?? 12), 20);
+
+        const web = TOOLS.find((t) => t.name === "web_search")!;
+        const query = `"${space}" competitors OR alternatives OR landscape OR "compared to"`;
+        const wsResult = (await web.exec({ query, num_results: 10 }, ctx)) as {
+          results?: Array<{ title: string; url: string; snippet: string }>;
+          error?: string;
+        };
+        if (wsResult.error) return wsResult;
+
+        const seenHost = new Set<string>();
+        const candidates: Array<{ title: string; url: string; positioning: string }> = [];
+        for (const r of wsResult.results ?? []) {
+          try {
+            const host = new URL(r.url).host.replace(/^www\./, "");
+            if (seenHost.has(host)) continue;
+            seenHost.add(host);
+            candidates.push({ title: r.title, url: r.url, positioning: r.snippet });
+            if (candidates.length >= depth) break;
+          } catch { /* skip invalid urls */ }
+        }
+        return { space, depth, candidates };
+      },
+    },
+    {
+      name: "find_acquisitions",
+      description:
+        "Surface recent acquisitions, mergers, and notable funding rounds in a sector. " +
+        "Wraps web_search with deal-shaped query terms and a year filter. Returns the " +
+        "top results with title, url, and snippet. Use to map who is consolidating and " +
+        "who is exiting.",
+      input_schema: {
+        type: "object",
+        properties: {
+          sector: { type: "string", minLength: 2, maxLength: 200 },
+          since_year: { type: "integer", minimum: 2015, maximum: 2030 },
+          num_results: { type: "integer", minimum: 1, maximum: 10, default: 8 },
+        },
+        required: ["sector"],
+        additionalProperties: false,
+      },
+      exec: async (input, ctx) => {
+        const sector = String(input.sector ?? "").trim();
+        if (!sector) return { error: "sector required" };
+        const sinceYear = Number(input.since_year ?? new Date().getUTCFullYear() - 2);
+        const n = Math.min(Number(input.num_results ?? 8), 10);
+
+        const web = TOOLS.find((t) => t.name === "web_search")!;
+        const query = `"${sector}" (acquired OR acquisition OR merger OR "acquires") after:${sinceYear}-01-01`;
+        const wsResult = (await web.exec({ query, num_results: n }, ctx)) as {
+          results?: Array<{ title: string; url: string; snippet: string }>;
+          error?: string;
+        };
+        if (wsResult.error) return wsResult;
+
+        return { sector, since_year: sinceYear, deals: wsResult.results ?? [] };
+      },
+    },
+    {
+      name: "find_industry_reports",
+      description:
+        "Find sized industry reports from named research firms (Gartner, IDC, McKinsey, " +
+        "Forrester, Statista, CB Insights). Wraps web_search with a site filter and " +
+        "optionally pulls the top result via fetch_url so the agent can cite it directly.",
+      input_schema: {
+        type: "object",
+        properties: {
+          topic: { type: "string", minLength: 2, maxLength: 200 },
+          fetch_top: { type: "boolean", default: false },
+        },
+        required: ["topic"],
+        additionalProperties: false,
+      },
+      exec: async (input, ctx) => {
+        const topic = String(input.topic ?? "").trim();
+        if (!topic) return { error: "topic required" };
+        const fetchTop = !!input.fetch_top;
+
+        const sites = ["gartner.com", "idc.com", "mckinsey.com", "forrester.com", "statista.com", "cbinsights.com"];
+        const siteFilter = sites.map((s) => `site:${s}`).join(" OR ");
+        const query = `"${topic}" market size OR "TAM" OR forecast (${siteFilter})`;
+
+        const web = TOOLS.find((t) => t.name === "web_search")!;
+        const wsResult = (await web.exec({ query, num_results: 8 }, ctx)) as {
+          results?: Array<{ title: string; url: string; snippet: string }>;
+          error?: string;
+        };
+        if (wsResult.error) return wsResult;
+
+        const reports = wsResult.results ?? [];
+        let top_content: string | null = null;
+        if (fetchTop && reports[0]) {
+          const fetch = TOOLS.find((t) => t.name === "fetch_url")!;
+          const fr = (await fetch.exec({ url: reports[0].url }, ctx)) as { content?: string; error?: string };
+          if (!fr.error && fr.content) top_content = fr.content.slice(0, 8_000);
+        }
+        return { topic, reports, top_content };
+      },
+    },
+  ],
+
   // ── Engineering: GitHub code/repo search ─────────────────────────────
   engineering: [{
     name: "search_github",
