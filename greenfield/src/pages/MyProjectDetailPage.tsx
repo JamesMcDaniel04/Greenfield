@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bot, ExternalLink, Github, Loader2 } from "lucide-react";
+import { ArrowLeft, Bot, Code2, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,7 @@ export default function MyProjectDetailPage() {
           <div className="mt-3 flex flex-wrap gap-3 text-sm">
             {project.repo_url && (
               <a href={project.repo_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground">
-                <Github className="h-4 w-4" />
+                <Code2 className="h-4 w-4" />
                 Repo
               </a>
             )}
