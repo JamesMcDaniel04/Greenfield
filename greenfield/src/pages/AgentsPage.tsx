@@ -76,7 +76,15 @@ export default function AgentsPage() {
     }
   }, [activeClaimSlug, claims, searchParams, setActiveClaim]);
 
-  const team = useMemo(() => (activeClaim ? buildAgentTeam(activeClaim) : []), [activeClaim]);
+  const team = useMemo(
+    () =>
+      activeClaim
+        ? buildAgentTeam(activeClaim).filter(
+            (a) => a.role !== "mentor" && a.role !== "evaluator",
+          )
+        : [],
+    [activeClaim],
+  );
   const selectedAgent = team.find((agent) => agent.role === selectedRole) ?? team[0] ?? null;
   const recommended = useMemo(() => recommendedWorkflowsForClaim(activeClaim, 3), [activeClaim]);
 
@@ -276,7 +284,7 @@ function AgentDetailCard({ agent, claim }: { agent: AgentPlan; claim: ClaimedIde
         claim={claim}
       />
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="mt-5 grid gap-5 2xl:grid-cols-2">
         <div className="space-y-5">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Instructions</p>

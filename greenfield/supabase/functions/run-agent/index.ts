@@ -23,7 +23,7 @@ import { toolsForRole, executeTool, type ToolContext, type ToolDefinition } from
 
 const MODEL          = "claude-sonnet-4-6";
 const MAX_TOKENS     = 4_000;
-const MAX_ITERATIONS = 8;
+const MAX_ITERATIONS = 20;
 
 const VALID_ROLES = new Set(["research", "gtm", "sales", "marketing", "engineering", "mentor", "evaluator"]);
 type AgentRole = "research" | "gtm" | "sales" | "marketing" | "engineering" | "mentor" | "evaluator";
@@ -637,6 +637,7 @@ async function runAgentLoop(args: {
   const trace: LoopResult["tool_calls"] = [];
   let tokens_input = 0;
   let tokens_output = 0;
+  let lastAssistantText = "";
 
   for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
     const resp = await anthropic.messages.create({
@@ -656,13 +657,17 @@ async function runAgentLoop(args: {
     const toolUses = (resp.content as Array<{ type: string; id?: string; name?: string; input?: Record<string, unknown> }>)
       .filter((b) => b.type === "tool_use");
 
+    // Capture any text emitted in this turn so we can return a partial result
+    // if we hit the iteration cap before stop_reason === "end_turn".
+    const turnText = (resp.content as Array<{ type: string; text?: string }>)
+      .filter((b): b is { type: string; text: string } => b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
+    if (turnText) lastAssistantText = turnText;
+
     if (resp.stop_reason === "end_turn" || toolUses.length === 0) {
-      const text = (resp.content as Array<{ type: string; text?: string }>)
-        .filter((b) => b.type === "text" && typeof b.text === "string")
-        .map((b) => b.text!)
-        .join("\n")
-        .trim();
-      return { output_markdown: text, tool_calls: trace, tokens_input, tokens_output };
+      return { output_markdown: turnText, tool_calls: trace, tokens_input, tokens_output };
     }
 
     // Echo the assistant turn back into history, then resolve each tool_use
@@ -690,9 +695,13 @@ async function runAgentLoop(args: {
     messages.push({ role: "user", content: toolResults });
   }
 
-  // Hit MAX_ITERATIONS — return whatever the last assistant text was, plus a note.
+  // Hit MAX_ITERATIONS — return the last text the assistant produced so the
+  // user can see partial work, prefixed with a cap-hit notice.
+  const capNote = `_(Agent hit the ${MAX_ITERATIONS}-iteration safety cap. Partial output below.)_`;
   return {
-    output_markdown: `_(Agent hit the ${MAX_ITERATIONS}-iteration safety cap. Last partial output not collected.)_`,
+    output_markdown: lastAssistantText
+      ? `${capNote}\n\n${lastAssistantText}`
+      : `${capNote}\n\n_(No assistant text was produced before the cap — the agent spent every turn in tool calls.)_`,
     tool_calls: trace,
     tokens_input,
     tokens_output,
