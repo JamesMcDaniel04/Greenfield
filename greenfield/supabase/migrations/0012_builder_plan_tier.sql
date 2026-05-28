@@ -1,76 +1,9 @@
--- 0012: builder plan tier
+-- 0012: builder plan tier (enum value only)
 --
--- Adds a new "builder" tier to plan_tier and a `byo_runs_per_month_quota`
--- column on teams. Builder is the entry tier that unlocks BYO ideas/projects
--- (private user-submitted entries that can be the subject of agent runs).
--- Quota is enforced server-side in the run-agent edge function.
+-- Adds the 'builder' value to plan_tier. The column on teams, plan_defaults()
+-- rewrite, and sync_team_plan_defaults() rewrite live in 0020 — Postgres
+-- forbids using a newly-added enum value in the same transaction that added
+-- it, so the rest has to happen in a later migration (and therefore later
+-- transaction).
 
-----------------------------------------------------------------------
--- 1. Extend the plan_tier enum
-----------------------------------------------------------------------
--- ALTER TYPE ... ADD VALUE must run outside a transaction in some setups;
--- the migration runner handles that. The IF NOT EXISTS guard makes this
--- safe to re-run on environments where the value already exists.
 alter type public.plan_tier add value if not exists 'builder';
-
-----------------------------------------------------------------------
--- 2. New quota column on teams
-----------------------------------------------------------------------
-alter table public.teams
-  add column if not exists byo_runs_per_month_quota integer not null default 0;
-
-----------------------------------------------------------------------
--- 3. Update plan_defaults() to include builder + return the new column
-----------------------------------------------------------------------
-create or replace function public.plan_defaults(p public.plan_tier)
-returns table (
-  claims_per_week_quota    integer,
-  seat_limit               integer,
-  byo_runs_per_month_quota integer
-)
-language sql immutable
-as $$
-  select
-    case p
-      when 'scout'          then 0
-      when 'entrepreneur'   then 1
-      when 'builder'        then 1
-      when 'venture_studio' then 10
-      when 'university'     then 50
-    end as claims_per_week_quota,
-    case p
-      when 'scout'          then 1
-      when 'entrepreneur'   then 1
-      when 'builder'        then 1
-      when 'venture_studio' then 5
-      when 'university'     then 25
-    end as seat_limit,
-    case p
-      when 'scout'          then 0
-      when 'entrepreneur'   then 0
-      when 'builder'        then 25
-      when 'venture_studio' then 100
-      when 'university'     then 200
-    end as byo_runs_per_month_quota;
-$$;
-
-----------------------------------------------------------------------
--- 4. Update sync_team_plan_defaults() to mirror the new column onto teams
-----------------------------------------------------------------------
-create or replace function public.sync_team_plan_defaults(team uuid)
-returns void
-language plpgsql security definer set search_path = public
-as $$
-declare
-  current_plan public.plan_tier;
-  defaults     record;
-begin
-  select plan into current_plan from public.teams where id = team;
-  select * into defaults from public.plan_defaults(current_plan);
-  update public.teams
-     set claims_per_week_quota    = defaults.claims_per_week_quota,
-         seat_limit               = defaults.seat_limit,
-         byo_runs_per_month_quota = defaults.byo_runs_per_month_quota
-   where id = team;
-end;
-$$;
