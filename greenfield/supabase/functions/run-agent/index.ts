@@ -20,6 +20,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "npm:@anthropic-ai/sdk@0.40.1";
 
 import { toolsForRole, executeTool, type ToolContext, type ToolDefinition } from "./tools.ts";
+import { getKlavisTools } from "./klavis.ts";
 
 const MODEL          = "claude-sonnet-4-6";
 const MAX_TOKENS     = 4_000;
@@ -458,7 +459,7 @@ async function resolveSubmissionSubject(
   };
 }
 
-function buildSystemPrompt(role: string, subject: Subject): string {
+function buildSystemPrompt(role: string, subject: Subject, klavisEnabled = false): string {
   if (subject.kind === "submission") {
     return buildCareerSystemPrompt(role, subject);
   }
@@ -488,11 +489,15 @@ function buildSystemPrompt(role: string, subject: Subject): string {
     "- Call `web_search` for fresh external info — only when internal context is insufficient.",
     "- Call `fetch_url` to read a specific source web_search surfaced.",
     "- Call `save_note` to record explicit handoffs to the other agents or to bookmark a finding.",
+    "- Call `spawn_workflow(slug, reason)` when the natural next step is a *named multi-step workflow* (not another agent's single run). The tool only records intent — the founder confirms in the UI before anything fires.",
     role === "research"    ? "- Call `landscape_competitors` for a wide (10–15) competitor map; `find_acquisitions` for M&A in the last 24 months; `find_industry_reports` for sized market data from named research firms." : "",
     role === "gtm"         ? "- Call `find_competitors` when you need a competitor list for positioning or pricing." : "",
     role === "sales"       ? "- Call `find_companies` when you need a target-account list — falls back to web_search if Apollo isn't configured." : "",
     role === "marketing"   ? "- Call `keyword_volume` to ground content/SEO bets in real demand numbers." : "",
     role === "engineering" ? "- Call `search_github` to find open-source incumbents or reference implementations before designing." : "",
+    klavisEnabled
+      ? "- The Klavis Strata navigator is available — call `discover_server_categories_or_actions` to explore ~85 third-party integrations (Gmail, Slack, GitHub, Notion, Stripe, Salesforce, HubSpot, Linear, Jira, Figma, …), then `get_category_actions` / `get_action_details` / `execute_action` to actually use them. Use these only when the work *needs* a specific integration the founder has connected — don't fish."
+      : "",
     "",
     "Output rules:",
     "- Return concrete work product, not generic advice.",
@@ -612,7 +617,6 @@ async function runAgentLoop(args: {
   admin: ReturnType<typeof createClient>;
 }): Promise<LoopResult> {
   const anthropic = new Anthropic({ apiKey: args.anthropicKey });
-  const systemPrompt = buildSystemPrompt(args.agent_role, args.subject);
   // @ts-expect-error — Deno global at runtime
   const env = Deno.env;
   const toolCtx: ToolContext = {
@@ -624,7 +628,22 @@ async function runAgentLoop(args: {
     env,
   };
 
-  const availableTools: ToolDefinition[] = toolsForRole(args.agent_role);
+  const builtInTools: ToolDefinition[] = toolsForRole(args.agent_role);
+
+  // Optionally fetch the Klavis Strata navigator tools. Failures degrade
+  // silently — the agent still runs with the built-in toolset.
+  const strataUrl = env.get("STRATA_MCP_URL");
+  let klavisTools: ToolDefinition[] = [];
+  if (strataUrl) {
+    try {
+      klavisTools = await getKlavisTools(strataUrl);
+    } catch (e) {
+      console.warn("Klavis tools unavailable:", (e as Error).message);
+    }
+  }
+
+  const systemPrompt = buildSystemPrompt(args.agent_role, args.subject, klavisTools.length > 0);
+  const availableTools: ToolDefinition[] = [...builtInTools, ...klavisTools];
   const tools = availableTools.map((t) => ({
     name: t.name,
     description: t.description,

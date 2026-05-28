@@ -23,7 +23,7 @@ import AgentRunsList from "@/components/agents/AgentRunsList";
 import { useClaimedIdeas } from "@/lib/claims";
 import { AGENT_BASES, buildAgentTeam } from "@/lib/agentTeam";
 import { AGENT_ROLE_LABEL, type AgentRole, type AgentPlan, type ClaimedIdea } from "@/lib/execution";
-import { recommendedWorkflowsForClaim } from "@/lib/workflows";
+import { recommendedWorkflowsForClaim, workflowsForAgent } from "@/lib/workflows";
 import { cn } from "@/lib/utils";
 
 const ROLE_ICON: Record<AgentRole, typeof Bot> = {
@@ -330,6 +330,8 @@ function AgentDetailCard({ agent, claim }: { agent: AgentPlan; claim: ClaimedIde
         </div>
       </div>
 
+      <WorkflowsForAgent agentRole={agent.role} claim={claim} />
+
       <div className="mt-6 border-t border-border/70 pt-5">
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Recent runs</p>
@@ -337,6 +339,35 @@ function AgentDetailCard({ agent, claim }: { agent: AgentPlan; claim: ClaimedIde
         <div className="mt-3">
           <AgentRunsList claim={claim} role={agent.role} />
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkflowsForAgent({ agentRole, claim }: { agentRole: AgentRole; claim: ClaimedIdea }) {
+  const workflows = useMemo(() => workflowsForAgent(agentRole, claim, 5), [agentRole, claim]);
+  if (workflows.length === 0) return null;
+  return (
+    <div className="mt-6 border-t border-border/70 pt-5">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+        Workflows this agent owns
+      </p>
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        {workflows.map(({ workflow, relation }) => (
+          <Link
+            key={workflow.slug}
+            to={`/workflows/${workflow.slug}?idea=${encodeURIComponent(claim.opportunity_slug)}`}
+            className="rounded-xl border border-border/70 bg-background p-3 transition-colors hover:border-primary/30 hover:bg-primary/[0.04]"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium leading-tight">{workflow.title}</p>
+              <Badge variant={relation === "primary" ? "soft" : "outline"} className="shrink-0 text-[10px]">
+                {relation === "primary" ? "Owner" : "Support"}
+              </Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{workflow.one_liner}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

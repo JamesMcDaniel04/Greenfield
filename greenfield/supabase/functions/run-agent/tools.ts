@@ -233,6 +233,44 @@ export const TOOLS: ToolDefinition[] = [
     },
   },
   {
+    name: "spawn_workflow",
+    description:
+      "Signal that the founder should run a named follow-up workflow on this " +
+      "subject. The tool DOES NOT execute the workflow — it records the intent " +
+      "in the run trace and surfaces a one-click 'Run now' CTA in the UI. Use " +
+      "for explicit handoffs into a multi-step orchestration (e.g. " +
+      "'source-of-truth-setup' after a GTM diagnostic). One spawn per genuine " +
+      "next step — don't fish.",
+    input_schema: {
+      type: "object",
+      properties: {
+        slug: {
+          type: "string",
+          description:
+            "Slug of the workflow to run next, e.g. 'source-of-truth-setup'. " +
+            "Use kebab-case slugs the founder has seen on the Workflows page.",
+          minLength: 2,
+          maxLength: 120,
+        },
+        reason: {
+          type: "string",
+          description: "Why this workflow next, in one sentence.",
+          minLength: 4,
+          maxLength: 400,
+        },
+      },
+      required: ["slug", "reason"],
+      additionalProperties: false,
+    },
+    // The tool just acknowledges — the UI is what actually fires the workflow.
+    exec: async (input) => ({
+      acknowledged: true,
+      slug: String(input.slug).trim(),
+      reason: String(input.reason).trim(),
+      note: "Workflow not executed yet; founder will confirm via the UI.",
+    }),
+  },
+  {
     name: "save_note",
     description:
       "Save a structured note that will appear on the run's timeline. Use this " +

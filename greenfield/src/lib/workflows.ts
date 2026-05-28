@@ -1,4 +1,4 @@
-import type { ClaimedIdea, WorkflowGuide, WorkflowTemplate } from "@/lib/execution";
+import type { AgentRole, ClaimedIdea, WorkflowGuide, WorkflowTemplate } from "@/lib/execution";
 
 export const WORKFLOW_GUIDES: WorkflowGuide[] = [
   {
@@ -489,25 +489,73 @@ export const WORKFLOW_LIBRARY: WorkflowTemplate[] = [
   },
 ];
 
-function fitScore(values: string[] | undefined, target: string): number {
-  if (!values?.length) return 1;
-  return values.includes(target) ? 4 : 0;
+/**
+ * Returns a per-axis score:
+ *  - undefined / empty fit list → 0.5 * weight  (mild tiebreaker, not a full point —
+ *    we don't want to reward workflows that just declined to declare any fit)
+ *  - target present in the list  → 4 * weight   (strong, discriminating match)
+ *  - target absent               → 0
+ */
+function fitScore(values: string[] | undefined, target: string, weight = 1): number {
+  if (!values?.length) return 0.5 * weight;
+  return values.includes(target) ? 4 * weight : 0;
+}
+
+/**
+ * Map the founder's launch window onto the workflow's stage. Tight launch
+ * windows want Foundation + Launch workflows; longer windows have room for
+ * Revenue + Retention work too. Worth ~one strong axis match when aligned.
+ */
+function stageMatchBonus(stage: WorkflowTemplate["stage"], timeToLaunch: string): number {
+  const t = timeToLaunch.toLowerCase();
+  const isShort = t.includes("week") || t.startsWith("<1");
+  const isMid   = t.includes("1-3");
+  const isLong  = t.includes("3+");
+
+  if (stage === "Foundation" && (isShort || isMid)) return 3;
+  if (stage === "Launch"     && (isShort || isMid)) return 3;
+  if (stage === "Revenue"    && isLong)             return 3;
+  if (stage === "Retention"  && isLong)             return 2;
+  return 0;
+}
+
+/** Rough hours-to-set-up estimate — used as the final tiebreaker (faster first). */
+function setupCost(setupTime: string): number {
+  const s = setupTime.toLowerCase();
+  if (s.includes("hour weekly")) return 1;          // recurring small commitment
+  const hourMatch = /^(\d+)\s*hour/.exec(s);
+  if (hourMatch) return Number.parseInt(hourMatch[1], 10);
+  if (s.includes("half day"))    return 4;
+  if (s.includes("1 day"))       return 8;
+  if (s.includes("day"))         return 16;
+  if (s.includes("week"))        return 40;
+  return 24;                                        // unknown → expensive default
 }
 
 export function scoreWorkflowFit(workflow: WorkflowTemplate, claim: ClaimedIdea | null): number {
   if (!claim) return 0;
-  return [
-    fitScore(workflow.fit.audiences, claim.audience),
-    fitScore(workflow.fit.models, claim.model_type),
-    fitScore(workflow.fit.industries, claim.industry),
-    fitScore(workflow.fit.distributions, claim.distribution_play),
-    fitScore(workflow.fit.founder_paths, claim.founder_path),
-  ].reduce((sum, score) => sum + score, 0);
+  // Industry & distribution are the most discriminating axes — a workflow
+  // built for "Vertical SaaS / community-led" matches very few claims.
+  // Founder path & model type are softer filters.
+  const base =
+    fitScore(workflow.fit.industries,     claim.industry,           1.5) +
+    fitScore(workflow.fit.distributions,  claim.distribution_play,  1.3) +
+    fitScore(workflow.fit.audiences,      claim.audience,           1.0) +
+    fitScore(workflow.fit.models,         claim.model_type,         0.8) +
+    fitScore(workflow.fit.founder_paths,  claim.founder_path,       0.7);
+  return base + stageMatchBonus(workflow.stage, claim.time_to_launch);
 }
 
 export function recommendedWorkflowsForClaim(claim: ClaimedIdea | null, limit = 6): WorkflowTemplate[] {
   return [...WORKFLOW_LIBRARY]
-    .sort((a, b) => scoreWorkflowFit(b, claim) - scoreWorkflowFit(a, claim) || a.title.localeCompare(b.title))
+    .sort((a, b) => {
+      const fit = scoreWorkflowFit(b, claim) - scoreWorkflowFit(a, claim);
+      if (fit !== 0) return fit;
+      // Tiebreak: prefer faster-to-set-up workflows, then alpha.
+      const cost = setupCost(a.setup_time) - setupCost(b.setup_time);
+      if (cost !== 0) return cost;
+      return a.title.localeCompare(b.title);
+    })
     .slice(0, limit);
 }
 
@@ -523,4 +571,34 @@ export function workflowFitNarrative(workflow: WorkflowTemplate, claim: ClaimedI
 
 export function workflowBySlug(slug: string) {
   return WORKFLOW_LIBRARY.find((workflow) => workflow.slug === slug) ?? null;
+}
+
+/**
+ * Workflows where this agent role is the primary owner or appears in the
+ * support set. Ranked by primary-vs-support, then by workflow fit against
+ * the optional claim, then alphabetically.
+ */
+export function workflowsForAgent(
+  role: AgentRole,
+  claim: ClaimedIdea | null = null,
+  limit = 5,
+): Array<{ workflow: WorkflowTemplate; relation: "primary" | "support" }> {
+  return WORKFLOW_LIBRARY
+    .map((workflow) => {
+      if (workflow.primary_agent === role) {
+        return { workflow, relation: "primary" as const };
+      }
+      if (workflow.support_agents.includes(role)) {
+        return { workflow, relation: "support" as const };
+      }
+      return null;
+    })
+    .filter((x): x is { workflow: WorkflowTemplate; relation: "primary" | "support" } => !!x)
+    .sort((a, b) => {
+      if (a.relation !== b.relation) return a.relation === "primary" ? -1 : 1;
+      const fit = scoreWorkflowFit(b.workflow, claim) - scoreWorkflowFit(a.workflow, claim);
+      if (fit !== 0) return fit;
+      return a.workflow.title.localeCompare(b.workflow.title);
+    })
+    .slice(0, limit);
 }

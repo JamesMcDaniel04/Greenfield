@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"klavis-strata": {
+			"type": "http",
+			"url": "https://strata.klavis.ai/mcp/",
+			"headers": {
+				"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiI0N2FjYWQyYS0yM2I4LTQ1ZTktYjkyMi01YmMwYWM5ZDNlMzIiLCJhY2NvdW50SWQiOiI1YWRmMDMwNS1kYzg1LTRhOGItYjYxZC03MDgyYWQ2MTM5YjgiLCJpc1RlYW1BY2NvdW50Ijp0cnVlLCJpYXQiOjE3Nzk5ODI5Mjl9.q6-3QZNQZ0UhNUGjVMFAZ889WeQCB_wYxKm1l2nlyZg"
+			}
+		}
+	},
+	"inputs": []
+}
