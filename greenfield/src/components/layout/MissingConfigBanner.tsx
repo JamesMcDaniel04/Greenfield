@@ -1,9 +1,14 @@
 import { Sparkles } from "lucide-react";
 
+import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
+import { PRACTICE_OPPORTUNITY_SLUGS } from "@/lib/researchedIdeas";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 export default function MissingConfigBanner() {
   if (isSupabaseConfigured) return null;
+
+  const founderCount = SAMPLE_OPPORTUNITIES.filter((opp) => !PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug)).length;
+  const practiceCount = SAMPLE_OPPORTUNITIES.filter((opp) => PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug)).length;
 
   return (
     <div className="border-b border-amber-300/60 bg-amber-50 text-amber-900">
@@ -11,7 +16,7 @@ export default function MissingConfigBanner() {
         <Sparkles className="mt-0.5 h-4 w-4 flex-shrink-0" />
         <div>
           <p className="font-medium">
-            Demo mode — showing 12 sample opportunities. No backend is connected.
+            Demo mode — showing the full local catalogue: {founderCount} founder opportunities and {practiceCount} practice builds.
           </p>
           <p className="mt-0.5 text-amber-800/90">
             Browse, filter, and open any opportunity to see the full layout. Accounts, saves, and live data need Supabase —
