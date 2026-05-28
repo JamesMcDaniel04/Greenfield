@@ -8,6 +8,45 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { DEV_LOGIN_EMAIL, enableDevBypass } from "@/lib/devBypass";
 
+/**
+ * Promote the developer's account to the highest plan tier so every gated
+ * surface (claims, BYO ideas/projects, Career track, admin nav) unlocks in
+ * one shot. Idempotent — safe to run on every bypass sign-in.
+ *
+ * Works because RLS allows users to update their own profile and team
+ * owners to update their team. The bypass page is the only client-side
+ * caller; production users go through Stripe + the webhook, which sets
+ * these fields server-side.
+ */
+async function elevateToFullAccess(userId: string) {
+  const now = new Date().toISOString();
+  const profileErr = (await supabase
+    .from("profiles")
+    .update({ plan: "university", is_pro: true, is_admin: true, pro_since: now })
+    .eq("user_id", userId)).error;
+  if (profileErr) throw profileErr;
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("personal_team_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const teamId = prof?.personal_team_id as string | null | undefined;
+  if (!teamId) return;
+
+  const teamErr = (await supabase
+    .from("teams")
+    .update({
+      plan: "university",
+      claims_per_week_quota: 50,
+      seat_limit: 25,
+      byo_runs_per_month_quota: 200,
+      career_runs_per_month_quota: 200,
+    })
+    .eq("id", teamId)).error;
+  if (teamErr) throw teamErr;
+}
+
 export default function DevBypassPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,10 +61,11 @@ export default function DevBypassPage() {
     }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      if (data.user) await elevateToFullAccess(data.user.id);
       enableDevBypass();
-      toast.success("Developer bypass active.");
+      toast.success("Developer bypass active — university tier granted.");
       navigate("/browse", { replace: true });
     } catch (err) {
       toast.error((err as Error).message);
