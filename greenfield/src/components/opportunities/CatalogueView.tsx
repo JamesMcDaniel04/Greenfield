@@ -58,7 +58,7 @@ export default function CatalogueView({
   return (
     <>
       <section className="border-b border-border/60 bg-gradient-to-b from-primary/[0.05] to-transparent">
-        <div className="px-6 md:px-10 pt-10 pb-8 max-w-6xl">
+        <div className="mx-auto w-full px-6 md:px-10 pt-10 pb-8 max-w-6xl">
           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-primary">
             {eyebrow}
           </p>
@@ -72,7 +72,7 @@ export default function CatalogueView({
       </section>
 
       <section className="sticky top-0 z-20 border-b border-border/70 bg-background/95 backdrop-blur">
-        <div className="px-6 md:px-10 py-3 max-w-6xl flex flex-wrap items-center gap-2">
+        <div className="mx-auto w-full px-6 md:px-10 py-3 max-w-6xl flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -147,7 +147,7 @@ export default function CatalogueView({
         </div>
       </section>
 
-      <section className="px-6 md:px-10 py-6 max-w-6xl">
+      <section className="mx-auto w-full px-6 md:px-10 py-6 max-w-6xl">
         <div className="mb-4 flex items-baseline justify-between">
           <p className="text-sm">
             <span className="font-medium">{isLoading ? "…" : filtered.length}</span>

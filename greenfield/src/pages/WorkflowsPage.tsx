@@ -78,7 +78,7 @@ export default function WorkflowsPage() {
   return (
     <>
       <section className="border-b border-border/60 bg-[radial-gradient(circle_at_top_left,_rgba(20,83,45,0.14),_transparent_30%),linear-gradient(180deg,_rgba(255,255,255,0.72),_rgba(255,255,255,0.98))]">
-        <div className="max-w-6xl px-6 py-10 md:px-10">
+        <div className="mx-auto w-full max-w-6xl px-6 py-10 md:px-10">
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.22em] text-primary">Workflow marketplace</p>
           <h1 className="max-w-4xl font-display text-3xl leading-tight md:text-4xl">
             Execution-ready workflows for founders, GTM, and the startup agents running behind them.
@@ -119,7 +119,7 @@ export default function WorkflowsPage() {
       </section>
 
       <section className="sticky top-0 z-20 border-b border-border/70 bg-background/95 backdrop-blur">
-        <div className="max-w-6xl px-6 py-3 md:px-10">
+        <div className="mx-auto w-full max-w-6xl px-6 py-3 md:px-10">
           {claims.length > 0 ? (
             <div className="mb-3 flex flex-wrap gap-2">
               {claims.map((claim) => (
@@ -164,7 +164,7 @@ export default function WorkflowsPage() {
         </div>
       </section>
 
-      <section className="max-w-6xl px-6 py-8 md:px-10">
+      <section className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10">
         <div className="mb-4 flex items-center justify-between gap-4">
           <p className="text-sm">
             <span className="font-medium">{filtered.length}</span>

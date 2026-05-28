@@ -35,7 +35,7 @@ export default function YcRequestsPage() {
     <>
       {/* Hero */}
       <section className="border-b border-border/60 bg-gradient-to-b from-accent/[0.06] to-transparent">
-        <div className="px-6 md:px-10 pt-10 pb-8 max-w-6xl">
+        <div className="mx-auto w-full px-6 md:px-10 pt-10 pb-8 max-w-6xl">
           <div className="flex items-center gap-2">
             <Rocket className="h-4 w-4 text-primary" />
             <p className="text-xs font-medium uppercase tracking-wider text-primary">YC Requests for Startups</p>
@@ -59,7 +59,7 @@ export default function YcRequestsPage() {
       </section>
 
       {/* Catalogue rows — same component as the main browse page */}
-      <section className="px-6 md:px-10 py-6 max-w-6xl">
+      <section className="mx-auto w-full px-6 md:px-10 py-6 max-w-6xl">
         <div className="mb-4 flex items-baseline justify-between">
           <p className="text-sm">
             <span className="font-medium">{isLoading ? "…" : opps.length}</span>

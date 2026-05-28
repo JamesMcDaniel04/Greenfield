@@ -47,7 +47,7 @@ export default function PricingPage() {
   }
 
   return (
-    <section className="px-6 md:px-10 py-12 max-w-6xl">
+    <section className="mx-auto w-full px-6 md:px-10 py-12 max-w-6xl">
       <header className="text-center">
         <p className="text-xs font-medium uppercase tracking-wider text-primary">Pricing</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl leading-tight">Choose your plan</h1>

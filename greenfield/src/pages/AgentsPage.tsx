@@ -82,7 +82,7 @@ export default function AgentsPage() {
 
   return (
     <>
-      <section className="max-w-6xl px-6 py-8 md:px-10">
+      <section className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10">
         {activeClaim ? (
           <div className="mb-6 rounded-2xl border border-primary/15 bg-card p-5 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
