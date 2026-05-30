@@ -19,9 +19,9 @@ function thisYearMonth(): string {
 }
 
 /**
- * Career quota mirror of byoUsage. The personal team carries the quota; we
- * read `career_runs_per_month_quota` from the plan tier and the current
- * month's `career_usage_monthly.runs_used` for the comparison.
+ * Career run quota gate. The personal team carries the quota; we read
+ * `career_runs_per_month_quota` from the plan tier and the current month's
+ * `career_usage_monthly.runs_used` for the comparison.
  */
 export function useCareerUsage(): CareerGate {
   const { profile, activeTeam } = useAuth();
