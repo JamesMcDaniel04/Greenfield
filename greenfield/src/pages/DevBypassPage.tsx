@@ -9,9 +9,9 @@ import { supabase } from "@/lib/supabase";
 import { DEV_LOGIN_EMAIL, enableDevBypass } from "@/lib/devBypass";
 
 /**
- * Promote the developer's account to the highest plan tier so every gated
- * surface (claims, BYO ideas/projects, Career track, admin nav) unlocks in
- * one shot. Idempotent — safe to run on every bypass sign-in.
+ * Promote the developer's account to the Career plan so every gated surface
+ * (enrollment, mentor runs, grading, portfolio) unlocks in one shot.
+ * Idempotent — safe to run on every bypass sign-in.
  *
  * Works because RLS allows users to update their own profile and team
  * owners to update their team. The bypass page is the only client-side
@@ -22,7 +22,7 @@ async function elevateToFullAccess(userId: string) {
   const now = new Date().toISOString();
   const profileErr = (await supabase
     .from("profiles")
-    .update({ plan: "university", is_pro: true, is_admin: true, pro_since: now })
+    .update({ plan: "career", is_pro: true, is_admin: true, pro_since: now })
     .eq("user_id", userId)).error;
   if (profileErr) throw profileErr;
 
@@ -37,10 +37,8 @@ async function elevateToFullAccess(userId: string) {
   const teamErr = (await supabase
     .from("teams")
     .update({
-      plan: "university",
-      claims_per_week_quota: 50,
+      plan: "career",
       seat_limit: 25,
-      byo_runs_per_month_quota: 200,
       career_runs_per_month_quota: 200,
     })
     .eq("id", teamId)).error;
@@ -65,8 +63,8 @@ export default function DevBypassPage() {
       if (error) throw error;
       if (data.user) await elevateToFullAccess(data.user.id);
       enableDevBypass();
-      toast.success("Developer bypass active — university tier granted.");
-      navigate("/browse", { replace: true });
+      toast.success("Developer bypass active — Career plan granted.");
+      navigate("/career", { replace: true });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

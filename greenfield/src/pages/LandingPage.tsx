@@ -1,26 +1,14 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Compass, ExternalLink, FileText, Filter, Lock, Mail, Rocket, Sparkles } from "lucide-react";
+import { ArrowRight, Check, FileCheck2, GraduationCap, Hammer, Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import OpportunityRow from "@/components/opportunities/OpportunityRow";
-import { SAMPLE_OPPORTUNITIES } from "@/lib/fixtures";
-import { PRACTICE_OPPORTUNITY_SLUGS } from "@/lib/researchedIdeas";
-import { SELF_SERVE_TIERS, TIER_BY_PLAN, type PricingTier } from "@/lib/pricing";
-import type { Opportunity, SourceCitation } from "@/lib/types";
-
-const PREVIEW_COUNT = 10;
+import { CAREER_TIER } from "@/lib/pricing";
+import { CAREER_TRACK_AI_AUTOMATION_SPECIALIST, CAREER_PROJECTS } from "@/lib/careerSeed";
 
 export default function LandingPage() {
-  const founderOpportunities = SAMPLE_OPPORTUNITIES.filter((opp) => !PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug));
-  const sourcedFounderOpportunities = founderOpportunities.filter((opp) => opp.sources.length > 0);
-  const practiceCount = SAMPLE_OPPORTUNITIES.filter((opp) => PRACTICE_OPPORTUNITY_SLUGS.has(opp.slug)).length;
-  const totalCount = founderOpportunities.length;
-  const previewCount = Math.min(PREVIEW_COUNT, sourcedFounderOpportunities.length);
-  const featured = [...sourcedFounderOpportunities]
-    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.rank - b.rank)
-    .slice(0, previewCount);
-  const lockedCount = Math.max(0, totalCount - previewCount);
+  const track = CAREER_TRACK_AI_AUTOMATION_SPECIALIST;
+  const projects = CAREER_PROJECTS.filter((p) => p.track_slug === track.slug).sort((a, b) => a.ordinal - b.ordinal);
 
   return (
     <>
@@ -29,18 +17,19 @@ export default function LandingPage() {
         <div className="container-wide py-20 md:py-28 text-center">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.06] px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="h-3 w-3" />
-            {founderOpportunities.length} founder opportunities live · {practiceCount} practice builds
+            {track.title} track · {projects.length} hireable projects · {track.est_duration}
           </p>
           <h1 className="mx-auto max-w-3xl font-display text-4xl md:text-6xl leading-[1.05]">
-            Find your next startup. Skip the blank page.
+            Don't watch courses. Build the portfolio that gets you hired.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-muted-foreground">
-            Greenfield is a curated catalogue of unbuilt startup opportunities, plus a separate practice library for sharpening your AI shipping skills. Each brief drops straight into Claude Code, Cursor, or Codex.
+            {track.hero_promise} Every project is graded against a rubric like a junior AI engineer would be —
+            and pass all five to publish a verified portfolio employers can trust.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
               <Link to="/auth?mode=signup">
-                Get instant access
+                Start the track
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -49,69 +38,29 @@ export default function LandingPage() {
             </Button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            From $97/year. Preview {previewCount} opportunities below — sign up to unlock the rest.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Every preview includes direct research links so you can check the demand signals yourself.
+            {CAREER_TIER.priceLabel}{CAREER_TIER.per} · {CAREER_TIER.priceFootnote}. Cancel anytime.
           </p>
         </div>
       </section>
 
-      {/* Social proof — coding-assistant logos */}
-      <section className="border-b border-border/60 bg-card/50">
-        <div className="container-wide py-8 flex flex-col items-center gap-5">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            Built for founders shipping with
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            <AssistantLogo src="/logos/claude-code.png" alt="Claude Code" />
-            <AssistantLogo src="/logos/cursor.jpeg" alt="Cursor" />
-            <AssistantLogo src="/logos/codex.jpeg" alt="Codex" />
-            <AssistantLogo src="/logos/v0.jpeg" alt="v0" />
-            <AssistantLogo src="/logos/bolt.png" alt="Bolt" />
-          </div>
-        </div>
-      </section>
-
-      {/* Preview opportunities */}
+      {/* The 5 projects */}
       <section className="border-b border-border/60">
         <div className="container-wide py-16">
-          <div className="space-y-3">
-            {featured.map((opp) => (
-              <LandingOpportunityPreview key={opp.id} opp={opp} />
-            ))}
+          <div className="text-center">
+            <p className="text-xs font-medium uppercase tracking-wider text-primary">The track</p>
+            <h2 className="mt-1 font-display text-2xl md:text-3xl">Five projects. Five hireable skills.</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">{track.summary}</p>
           </div>
 
-          {lockedCount > 0 && (
-            <div className="relative mt-3 overflow-hidden rounded-xl border border-dashed bg-gradient-to-b from-card to-muted/30">
-              <div className="pointer-events-none absolute inset-x-0 top-0 space-y-3 p-4 opacity-30 blur-[1px]">
-                <div className="h-20 rounded-lg border bg-card" />
-                <div className="h-20 rounded-lg border bg-card" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/80 to-background" />
-              <div className="relative px-6 py-16 text-center">
-                <Lock className="mx-auto h-6 w-6 text-primary" />
-                <h3 className="mt-3 font-display text-xl">
-                  {lockedCount} more opportunities behind sign-up.
-                </h3>
-                <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-                  Full briefs, filters, saved lists, and downloadable Markdown specs.
-                  Scout is $97/year — cancel anytime.
-                </p>
-                <div className="mt-5 flex flex-wrap justify-center gap-3">
-                  <Button asChild>
-                    <Link to="/auth?mode=signup">
-                      Create account
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" asChild>
-                    <a href="#pricing">See pricing</a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          <ol className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {projects.map((p) => (
+              <li key={p.slug} className="rounded-xl border bg-card p-4">
+                <p className="text-xs font-medium text-muted-foreground">Project {p.ordinal}</p>
+                <p className="mt-2 font-medium leading-snug">{p.title}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{p.hireable_skill}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -120,57 +69,115 @@ export default function LandingPage() {
         <div className="container-wide py-16">
           <div className="text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">How it works</p>
-            <h2 className="mt-1 font-display text-2xl md:text-3xl">Three steps from idea to first commit.</h2>
+            <h2 className="mt-1 font-display text-2xl md:text-3xl">Build, defend, get verified.</h2>
           </div>
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             <Step
               n="01"
-              icon={<Filter className="h-5 w-5" />}
-              title="Filter to what fits you"
-              body="Choose your audience, capital appetite, difficulty, and stack preference. The catalogue narrows from hundreds to the handful you'd actually build."
+              icon={<Hammer className="h-5 w-5" />}
+              title="Build the real thing"
+              body="Each project ships a working system — a RAG bot, a CRM automation, a production AI app — with a repo, a live deploy, and a demo. No multiple-choice quizzes."
             />
             <Step
               n="02"
-              icon={<Compass className="h-5 w-5" />}
-              title="Read the full brief"
-              body="Every opportunity has a real demand signal, a market size with numbers, a 'why now' tied to a specific shift, and a concrete week-1 plan."
+              icon={<FileCheck2 className="h-5 w-5" />}
+              title="Get graded on a rubric"
+              body="An evaluator scores every criterion and gives feedback you can act on. Anti-cheat checkpoints make you defend your decisions in your own words — generic answers fail."
             />
             <Step
               n="03"
-              icon={<FileText className="h-5 w-5" />}
-              title="Download and ship"
-              body="One click gives you a Markdown build brief — stack, schema, milestones — ready to paste into Claude Code, Cursor, or Codex. Stop scaffolding, start shipping."
+              icon={<ShieldCheck className="h-5 w-5" />}
+              title="Publish a verified portfolio"
+              body="Pass all five and your /portfolio/your-name page goes live with the verified badge — proof you can point employers to."
             />
           </div>
+        </div>
+      </section>
+
+      {/* Why this is different */}
+      <section className="border-b border-border/60">
+        <div className="container-wide py-16 max-w-3xl">
+          <div className="text-center">
+            <p className="text-xs font-medium uppercase tracking-wider text-primary">Why it's different</p>
+            <h2 className="mt-1 font-display text-2xl md:text-3xl">A credential you can actually trust.</h2>
+          </div>
+          <ul className="mt-8 space-y-3 text-sm text-muted-foreground">
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+              <span><span className="text-foreground font-medium">No video courses.</span> You build, you don't watch.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+              <span><span className="text-foreground font-medium">Anti-cheat checkpoints.</span> Every project asks you to explain decisions in your own words. Generic AI-default answers fail evaluation.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Check className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+              <span><span className="text-foreground font-medium">Rubric-based grading.</span> Specific scores per criterion, with feedback you can act on. Optional human review for borderline calls.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Sparkles className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+              <span><span className="text-foreground font-medium">Verified public portfolio.</span> Pass all 5 projects and your <code className="rounded bg-muted px-1 py-0.5 text-xs">/portfolio/your-name</code> page goes live with the verified badge.</span>
+            </li>
+          </ul>
         </div>
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="border-b border-border/60">
+      <section id="pricing" className="border-b border-border/60 bg-muted/30">
         <div className="container-wide py-16">
           <div className="text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">Pricing</p>
-            <h2 className="mt-1 font-display text-2xl md:text-3xl">Choose your plan.</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-              Browse on Scout, claim and run agents on Entrepreneur, or bring a studio team on Venture Studio.
+            <h2 className="mt-1 font-display text-2xl md:text-3xl">One plan. Everything included.</h2>
+          </div>
+
+          <div className="mt-10 mx-auto max-w-md">
+            <div className="relative flex flex-col rounded-2xl border border-primary/50 bg-gradient-to-br from-primary/[0.05] to-accent/[0.07] p-6 shadow-md">
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-display text-2xl">{CAREER_TIER.name}</h3>
+                <Badge className="bg-accent text-accent-foreground hover:bg-accent">Recommended</Badge>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{CAREER_TIER.tagline}</p>
+
+              <div className="mt-5 flex items-baseline gap-1">
+                <span className="font-display text-4xl">{CAREER_TIER.priceLabel}</span>
+                <span className="text-sm text-muted-foreground">{CAREER_TIER.per}</span>
+              </div>
+              {CAREER_TIER.priceFootnote && <p className="mt-0.5 text-xs text-primary">{CAREER_TIER.priceFootnote}</p>}
+
+              <ul className="mt-6 flex-1 space-y-2.5 text-sm">
+                {CAREER_TIER.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button asChild className="mt-7 w-full">
+                <Link to={`/auth?mode=signup&plan=${CAREER_TIER.plan}`}>
+                  <Lock className="h-4 w-4" />
+                  {CAREER_TIER.cta}
+                </Link>
+              </Button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">Cancel anytime. No questions asked.</p>
+            </div>
+          </div>
+
+          <div className="mx-auto mt-6 max-w-md rounded-2xl border bg-card p-6 text-center">
+            <h3 className="font-display text-lg">Universities & accelerators</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cohort accounts, co-branded reporting, and curriculum support for programs.
             </p>
+            <Button asChild variant="outline" className="mt-4">
+              <a href="mailto:hello@greenfield.app?subject=Cohort%20inquiry"><Mail className="h-4 w-4" />Contact us</a>
+            </Button>
           </div>
-
-          <div className="mt-10 mx-auto max-w-6xl grid gap-6 md:grid-cols-3">
-            {SELF_SERVE_TIERS.map((tier) => <LandingTierCard key={tier.plan} tier={tier} />)}
-          </div>
-
-          <UniversityCard tier={TIER_BY_PLAN.university} />
-
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            Annual billing only. Cancel anytime — access stays active through the end of the term.
-          </p>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="border-b border-border/60 bg-muted/30">
+      <section id="faq" className="border-b border-border/60">
         <div className="container-wide py-16 max-w-3xl">
           <div className="text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-primary">FAQ</p>
@@ -178,28 +185,24 @@ export default function LandingPage() {
           </div>
           <div className="mt-10 space-y-4">
             <Faq
-              q="Where do the opportunities come from?"
-              a="A mix of structural analysis (looking for industries with unmet demand signals and recently-shifted economics) and curation from the team's network. Some are seeded by external lists — YC's Requests for Startups — but every brief is written from scratch."
+              q="Do I need to know how to code already?"
+              a="You should be comfortable writing and running code with a coding assistant like Claude Code, Cursor, or Codex. The track assumes you can ship a small app; it teaches you to build production-grade AI systems on top of that."
             />
             <Faq
-              q="What's the difference between Scout, Entrepreneur, and Venture Studio?"
-              a="Scout ($97/yr) gives one founder full access to the catalogue and downloadable briefs. Entrepreneur ($197/yr) adds one exclusive idea claim per year — when you claim an idea it disappears from everyone else's catalogue and unlocks a four-agent team (GTM, Sales, Marketing, Engineering) tailored to that idea. Venture Studio ($12,000/yr) is the same but for a 5-seat team with 10 claims/week shared across the team."
+              q="How is the grading done?"
+              a="Each project has a rubric with specific criteria and pass thresholds. When you submit your repo, deploy URL, and written answers, an evaluator scores every criterion and returns feedback. Borderline scores can be sent for optional human review."
             />
             <Faq
-              q="What does 'claim an idea' actually do?"
-              a="It hides the opportunity from everyone else on the platform, opens a private workspace for you, and spins up four agents (GTM, Sales, Marketing, Engineering) that are pre-configured with the idea's audience, market, and build path. Release the claim at any time and the idea returns to the public catalogue."
+              q="What stops people from cheating with AI?"
+              a="Every project includes anti-cheat questions that require you to explain your own decisions — chunking tradeoffs, failure cases, architecture calls — with a minimum length. Generic, AI-default answers fail evaluation."
             />
             <Faq
-              q="Can I export the briefs to use them offline?"
-              a="Yes. Every brief is downloadable as a single Markdown file. Drop it into Claude Code, Cursor, Codex, or whatever your coding agent of choice is — no lock-in."
+              q="What is the verified portfolio?"
+              a="Pass all five projects and your public page at /portfolio/your-name goes live with a verified badge listing the projects you completed. Share it with employers as proof of real, graded work."
             />
             <Faq
-              q="How often is the catalogue updated?"
-              a="New opportunities are added weekly. Team members get a Friday digest of new entries scoped to their saved list."
-            />
-            <Faq
-              q="Is the demand-signal chart real data?"
-              a="In the live product, yes — derived from search volume trends, funding activity, and job-posting indices. In demo mode (when you're running this without a backend), the sparklines are synthesised from the opportunity's trend shape."
+              q="How long does it take?"
+              a={`The ${track.title} track is designed to take ${track.est_duration} at a focused pace, but you work at your own speed — your plan includes a monthly pool of mentor and evaluator agent runs.`}
             />
           </div>
         </div>
@@ -208,14 +211,14 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section>
         <div className="container-wide py-20 text-center">
-          <Rocket className="mx-auto h-8 w-8 text-primary" />
-          <h2 className="mt-4 font-display text-3xl md:text-4xl">Stop scrolling Twitter for ideas.</h2>
+          <GraduationCap className="mx-auto h-8 w-8 text-primary" />
+          <h2 className="mt-4 font-display text-3xl md:text-4xl">Stop collecting certificates nobody trusts.</h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Create an account, pick one, and have a working scaffold by tomorrow.
+            Build five real AI systems, get them graded, and graduate with a portfolio that proves it.
           </p>
           <Button size="lg" asChild className="mt-6">
             <Link to="/auth?mode=signup">
-              Get instant access
+              Start the track
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -225,152 +228,7 @@ export default function LandingPage() {
   );
 }
 
-function LandingOpportunityPreview({ opp }: { opp: Opportunity }) {
-  const visibleSources = opp.sources.slice(0, 3);
-
-  return (
-    <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <OpportunityRow opp={opp} linkTo={`/preview/${opp.slug}`} />
-      <div className="border-t border-border/70 bg-muted/[0.18] px-4 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-            Demand Evidence
-          </p>
-          <Link
-            to={`/preview/${opp.slug}`}
-            className="text-xs font-medium text-muted-foreground hover:text-foreground"
-          >
-            Open full preview
-          </Link>
-        </div>
-
-        <div className="mt-3 grid gap-2 md:grid-cols-3">
-          {visibleSources.map((source) => (
-            <a
-              key={`${opp.id}-${source.url}`}
-              href={source.url}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl border bg-background/80 p-3 transition-colors hover:border-primary/35 hover:bg-background"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  {sourceLabel(source)}
-                </span>
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-              <p className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-foreground/90">
-                {source.title}
-              </p>
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                {source.snippet ?? sourceHost(source.url)}
-              </p>
-            </a>
-          ))}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function sourceLabel(source: SourceCitation) {
-  switch (source.source_type) {
-    case "reddit":
-      return "Reddit";
-    case "hackernews":
-      return "Hacker News";
-    case "github":
-      return "GitHub";
-    case "arxiv":
-      return "arXiv";
-    case "blog":
-      return "Article";
-    case "other":
-      return "Source";
-    default:
-      return source.source_type;
-  }
-}
-
-function sourceHost(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
-function LandingTierCard({ tier }: { tier: PricingTier }) {
-  const mailto = `mailto:hello@greenfield.app?subject=${encodeURIComponent(`${tier.name} inquiry`)}`;
-  const signupHref = `/auth?mode=signup&plan=${tier.plan}`;
-  return (
-    <div
-      className={
-        "relative flex flex-col rounded-2xl border p-6 " +
-        (tier.highlight
-          ? "border-primary/50 bg-gradient-to-br from-primary/[0.05] to-accent/[0.07] shadow-md"
-          : "bg-card")
-      }
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-display text-2xl">{tier.name}</h3>
-        {tier.highlight && (
-          <Badge className="bg-accent text-accent-foreground hover:bg-accent">Recommended</Badge>
-        )}
-      </div>
-      <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
-
-      <div className="mt-5 flex items-baseline gap-1">
-        <span className="font-display text-4xl">{tier.priceLabel}</span>
-        <span className="text-sm text-muted-foreground">{tier.per}</span>
-      </div>
-      {tier.priceFootnote && <p className="mt-0.5 text-xs text-primary">{tier.priceFootnote}</p>}
-
-      <ul className="mt-6 flex-1 space-y-2.5 text-sm">
-        {tier.features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      <Button asChild variant={tier.highlight ? "default" : "outline"} className="mt-7 w-full">
-        {tier.contactOnly ? (
-          <a href={mailto}><Mail className="h-4 w-4" />{tier.cta}</a>
-        ) : (
-          <Link to={signupHref}><Lock className="h-4 w-4" />{tier.cta}</Link>
-        )}
-      </Button>
-      <p className="mt-2 text-center text-xs text-muted-foreground">Cancel anytime. No questions asked.</p>
-    </div>
-  );
-}
-
-function UniversityCard({ tier }: { tier: PricingTier }) {
-  const mailto = `mailto:hello@greenfield.app?subject=${encodeURIComponent(`${tier.name} inquiry`)}`;
-  return (
-    <div className="mx-auto mt-6 max-w-6xl rounded-2xl border bg-card p-6 md:flex md:items-center md:justify-between md:gap-8">
-      <div>
-        <h3 className="font-display text-xl">{tier.name}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{tier.tagline}</p>
-        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-          {tier.features.map((f) => (
-            <li key={f} className="flex items-center gap-2">
-              <Check className="h-4 w-4 text-primary" />
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <Button asChild className="mt-4 md:mt-0">
-        <a href={mailto}><Mail className="h-4 w-4" />{tier.cta}</a>
-      </Button>
-    </div>
-  );
-}
-
-function Step({ n, icon, title, body }: { n: string; icon: React.ReactNode; title: string; body: string }) {
+function Step({ n, icon, title, body }: { readonly n: string; readonly icon: React.ReactNode; readonly title: string; readonly body: string }) {
   return (
     <div className="rounded-2xl border bg-card p-6">
       <div className="flex items-center justify-between">
@@ -383,21 +241,7 @@ function Step({ n, icon, title, body }: { n: string; icon: React.ReactNode; titl
   );
 }
 
-function AssistantLogo({ src, alt }: { src: string; alt: string }) {
-  return (
-    <div className="flex items-center gap-2.5 opacity-80 transition-opacity hover:opacity-100">
-      <img
-        src={src}
-        alt={alt}
-        className="h-7 w-7 rounded-md object-contain"
-        loading="lazy"
-      />
-      <span className="text-sm font-medium text-foreground/80">{alt}</span>
-    </div>
-  );
-}
-
-function Faq({ q, a }: { q: string; a: string }) {
+function Faq({ q, a }: { readonly q: string; readonly a: string }) {
   return (
     <details className="group rounded-lg border bg-card px-4 py-3">
       <summary className="cursor-pointer list-none flex items-center justify-between gap-3 text-sm font-medium">

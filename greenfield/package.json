@@ -8,9 +8,6 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed": "tsx scripts/seed.ts",
-    "seed:researched": "tsx scripts/sync-researched-ideas.ts",
-    "sync:evidence": "tsx scripts/sync-researched-ideas.ts",
     "typecheck": "tsc -b --noEmit",
     "test": "playwright test",
     "test:ui": "playwright test --ui"

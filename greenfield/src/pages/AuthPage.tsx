@@ -27,7 +27,7 @@ export default function AuthPage() {
         toast.success("Account created — pick a plan to continue.");
         // New accounts must go through Stripe Checkout before reaching the
         // app shell. The /pricing page handles checkout and the post-payment
-        // hand-off back to /browse.
+        // hand-off back to /career.
         navigate("/pricing?afterSignup=1");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -57,8 +57,8 @@ export default function AuthPage() {
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
         {mode === "signup"
-          ? "Save opportunities, unlock build briefs."
-          : "Sign in to access your saved list."}
+          ? "Start the AI Automation Specialist track and build a verified portfolio."
+          : "Sign in to continue your track."}
       </p>
 
       <Button variant="outline" className="mt-6 w-full" onClick={signInWithGoogle}>

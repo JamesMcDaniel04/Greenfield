@@ -2,17 +2,14 @@
  * create-checkout-session — Supabase Edge Function (Deno)
  *
  * POST /functions/v1/create-checkout-session
- * Body: { plan: 'entrepreneur' | 'builder' | 'career' | 'venture_studio' }
+ * Body: { plan: 'career' }
  *
  * Auth: caller's JWT. Resolves the caller's owned team. Creates a Stripe
  * Checkout Session for the configured annual price, returns { url }.
  *
  * Required env:
  *  - STRIPE_SECRET_KEY                 (sk_live_... or sk_test_...)
- *  - STRIPE_PRICE_ENTREPRENEUR         (price_... — annual)
- *  - STRIPE_PRICE_BUILDER              (price_... — annual)
  *  - STRIPE_PRICE_CAREER               (price_... — annual)
- *  - STRIPE_PRICE_VENTURE_STUDIO       (price_... — annual)
  *  - APP_URL                           (e.g. https://greenfield.app) — success/cancel returns
  */
 
@@ -25,8 +22,8 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Plan = "entrepreneur" | "builder" | "career" | "venture_studio";
-const VALID_PLANS = new Set<Plan>(["entrepreneur", "builder", "career", "venture_studio"]);
+type Plan = "career";
+const VALID_PLANS = new Set<Plan>(["career"]);
 
 // @ts-expect-error — Deno global at runtime
 Deno.serve(async (req: Request) => {
@@ -44,13 +41,7 @@ Deno.serve(async (req: Request) => {
 
   const priceByPlan: Record<Plan, string> = {
     // @ts-expect-error
-    entrepreneur: Deno.env.get("STRIPE_PRICE_ENTREPRENEUR")!,
-    // @ts-expect-error
-    builder: Deno.env.get("STRIPE_PRICE_BUILDER")!,
-    // @ts-expect-error
     career: Deno.env.get("STRIPE_PRICE_CAREER")!,
-    // @ts-expect-error
-    venture_studio: Deno.env.get("STRIPE_PRICE_VENTURE_STUDIO")!,
   };
 
   const authHeader = req.headers.get("Authorization");
@@ -69,16 +60,15 @@ Deno.serve(async (req: Request) => {
     return json({ error: "INVALID_INPUT", details: "Body must be JSON" }, 400);
   }
   if (!body.plan || !VALID_PLANS.has(body.plan)) {
-    return json({ error: "INVALID_INPUT", details: "plan must be entrepreneur | builder | career | venture_studio" }, 400);
+    return json({ error: "INVALID_INPUT", details: "plan must be career" }, 400);
   }
   const priceId = priceByPlan[body.plan];
   if (!priceId) {
     return json({ error: "PRICE_NOT_CONFIGURED", details: `Set STRIPE_PRICE_${body.plan.toUpperCase()}` }, 500);
   }
 
-  // Resolve the team this user owns. For Entrepreneur and Venture Studio it's
-  // always the team the caller is the owner of (we never let one user upgrade
-  // a team they only belong to as a member).
+  // Resolve the team this user owns — we only ever upgrade a team the caller
+  // owns, never one they belong to as a member.
   const { data: ownedTeams, error: teamErr } = await user
     .from("team_members")
     .select("team_id, role, teams!inner(id, name, stripe_customer_id)")

@@ -4,7 +4,7 @@
  * The Layout gate reads this flag to skip the pricing redirect.
  *
  * Also exports a short-lived "just paid" grace flag so a user returning
- * from Stripe Checkout can reach /browse before the webhook flips
+ * from Stripe Checkout can reach /career before the webhook flips
  * profile.is_pro server-side.
  */
 
